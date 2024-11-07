@@ -1,9 +1,7 @@
 package com.myprojects.modules.runningtracker.ui
 
-import android.content.Context
 import android.content.Intent
 import android.util.Log
-import android.widget.ToggleButton
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -18,10 +16,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.lifecycle.LifecycleCoroutineScope
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -35,27 +29,20 @@ import com.myprojects.modules.runningtracker.Constants.ACTION_START_OR_RESUME_SE
 import com.myprojects.modules.runningtracker.Constants.ACTION_STOP_SERVICE
 import com.myprojects.modules.runningtracker.services.TrackingService
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val coroutineScope = rememberCoroutineScope()
 
-    //val polylinesFlow by viewmodel.polyLinesFlow.collectAsState()
-    //val locationFlow by viewmodel.locationFlow.collectAsState()
     val atasehir = LatLng(49.2510221, -123.00441)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(atasehir/*locationFlow!!*/, 15f)
     }
     val polyLines by viewmodel.polyLineFlow.collectAsState()
-
-    val lifecycleScope = LocalLifecycleOwner.current.lifecycleScope
-
+    val location by viewmodel.locationFlow.collectAsState()
     val isTracking = TrackingService.isTracking.collectAsState()
-
     var text2 by remember { mutableStateOf("Stop 0") }
-
     val context = LocalContext.current
 
     fun startOrResumeTrackingService() {
@@ -80,33 +67,35 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
 
     LaunchedEffect(Unit) {
         viewmodel.getLocationFlow()
-        //lifecycleScope.launch {
-        //    TrackingService.isTracking.collect {
-
-        //    }
-        //}
     }
-
 
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState
     ) {
-        Log.d("------------", "lines==$polyLines")
+        Marker(
+            state = MarkerState(position = cameraPositionState.position.target),
+            title = ""
+        )
+
+        location?.let {
+            cameraPositionState.position =
+                CameraPosition.fromLatLngZoom(location!!, 12f)
+            Log.d("------------", "camera=${location}")
+        }
+
+
         if (polyLines.isNotEmpty()) {
+            Log.d("------------", "compose lines=$polyLines")
             Marker(
                 state = MarkerState(position = cameraPositionState.position.target),
                 title = ""
             )
-            if (polyLines.last().isNotEmpty()) {
-                cameraPositionState.position =
-                    CameraPosition.fromLatLngZoom(polyLines.last().last(), 15f)
-                Log.d("------------", "camera=${polyLines.last().last()}")
-            }
             for (polyLine in polyLines) {
                 Polyline(
-                    points = polyLine, color = Color.Red, width = 7f
+                    points = polyLine.toList(), color = Color.Red, width = 7f
                 )
+                Log.d("------------", "compose**line=$polyLine")
             }
         }
     }
@@ -119,8 +108,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                 coroutineScope.launch {
                     pauseTrackingService()
                 }
-            }
-            else {
+            } else {
                 Log.d("---------", "start...${isTracking.value}")
                 coroutineScope.launch {
                     startOrResumeTrackingService()

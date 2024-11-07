@@ -1,26 +1,21 @@
 package com.myprojects.modules.runningtracker.ui
 
 import android.Manifest
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.myprojects.modules.runningtracker.Constants.ACTION_START_OR_RESUME_SERVICE
-import com.myprojects.modules.runningtracker.services.TrackingService
 import com.myprojects.modules.runningtracker.ui.theme.RunningTrackerTheme
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 import dagger.hilt.android.AndroidEntryPoint

@@ -55,14 +55,15 @@ class TrackingService : LifecycleService() {
         //val pathPointsFlow = MutableStateFlow<LatLng?>(null)
         //val polyLinesFlow = MutableStateFlow<Polylines?>(null)
         val atasehir = LatLng(0.0, 0.0)
-        val polylineFlow = MutableStateFlow(listOf(listOf(atasehir)))
-        val lines = mutableListOf(mutableListOf(atasehir))
+       // val polylineFlow = MutableStateFlow(listOf(listOf(atasehir)))
+       // val lines = mutableListOf(mutableListOf(atasehir))
+        val locationFlow = MutableStateFlow(atasehir)
     }
 
     private fun postInitialValues() {
         //isTracking.postValue(false)
         //pathPoints.postValue(mutableListOf())
-        polylineFlow.tryEmit(mutableListOf())
+        //polylineFlow.tryEmit(mutableListOf())
     }
 
     override fun onCreate() {
@@ -169,9 +170,9 @@ class TrackingService : LifecycleService() {
     }
 
     private fun addEmptyPolyline() {
-        lines.add(mutableListOf())
-        Log.d("-----------", "add empty =$lines")
-        polylineFlow.tryEmit(lines.toList())
+        //lines.add(mutableListOf())
+        //Log.d("-----------", "add empty =$lines")
+        //polylineFlow.tryEmit(lines.toList())
     }
 
     private fun addPathPoint(location: Location?) {
@@ -183,13 +184,14 @@ class TrackingService : LifecycleService() {
             //     pathPointsFlow.tryEmit(pos)
 
             //     polyLinesFlow.tryEmit(this)
-            lines.last().add(pos)
-            val l = lines.toList().toList()
-            Log.d("-------------", "addPath....size=${lines.size}")
-            polylineFlow.tryEmit(lines)
+            //lines.last().add(pos)
+            //val l = lines.toList().toList()
+            //Log.d("-------------", "addPath....size=${lines.size}")
+            //polylineFlow.tryEmit(lines)
+            locationFlow.tryEmit(pos)
 
 
-            Log.d("----------", "addPath last size=${lines.last().size}")
+            Log.d("----------", "emit pos=${pos}")
 
             //}
         }
