@@ -2,7 +2,11 @@ package com.myprojects.modules.runningtracker.ui
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -37,12 +42,12 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
 
     val atasehir = LatLng(49.2510221, -123.00441)
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(atasehir/*locationFlow!!*/, 15f)
+        position = CameraPosition.fromLatLngZoom(atasehir, 12f)
     }
     val polyLines by viewmodel.polyLineFlow.collectAsState()
     val location by viewmodel.locationFlow.collectAsState()
     val isTracking = TrackingService.isTracking.collectAsState()
-    var text2 by remember { mutableStateOf("Stop 0") }
+    var text2 by remember { mutableStateOf("Start") }
     val context = LocalContext.current
 
     fun startOrResumeTrackingService() {
@@ -63,7 +68,6 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
             it.action = ACTION_STOP_SERVICE
             context.startService(it)
         }
-
 
     LaunchedEffect(Unit) {
         viewmodel.getLocationFlow()
@@ -100,23 +104,40 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
         }
     }
 
-    Button(
-        onClick = {
-            if (isTracking.value) {
-                Log.d("---------", "stop...${isTracking.value}")
-                text2 = "Start"
-                coroutineScope.launch {
-                    pauseTrackingService()
-                }
-            } else {
-                Log.d("---------", "start...${isTracking.value}")
-                coroutineScope.launch {
-                    startOrResumeTrackingService()
-                }
-                text2 = "Stop"
-            }
-        }
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
     ) {
-        Text(text = text2)
+        Button(
+            onClick = {
+                if (isTracking.value) {
+                    Log.d("---------", "Pause...${isTracking.value}")
+                    text2 = "Start"
+                    coroutineScope.launch {
+                        pauseTrackingService()
+                    }
+                } else {
+                    Log.d("---------", "Start...${isTracking.value}")
+                    coroutineScope.launch {
+                        startOrResumeTrackingService()
+                    }
+                    text2 = "Pause"
+                }
+            }
+        ) {
+            Text(text = text2)
+        }
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    stopTrackingService()
+                }
+            }
+        ) {
+            Text(text = "Stop")
+        }
     }
 }

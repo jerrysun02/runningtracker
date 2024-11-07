@@ -18,7 +18,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -38,37 +37,20 @@ import com.myprojects.modules.runningtracker.R
 import com.myprojects.modules.runningtracker.TrackingUtility
 import com.myprojects.modules.runningtracker.ui.MainActivity
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
-
-typealias Polyline = MutableList<LatLng>
-typealias Polylines = MutableList<Polyline>
 
 class TrackingService : LifecycleService() {
     private var isFirstRun = true
-
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     companion object {
         val isTracking = MutableStateFlow(false)
-
-        //val pathPoints = MutableLiveData<Polylines>()
-        //val pathPointsFlow = MutableStateFlow<LatLng?>(null)
-        //val polyLinesFlow = MutableStateFlow<Polylines?>(null)
         val atasehir = LatLng(0.0, 0.0)
-       // val polylineFlow = MutableStateFlow(listOf(listOf(atasehir)))
-       // val lines = mutableListOf(mutableListOf(atasehir))
-        val locationFlow = MutableStateFlow(atasehir)
-    }
-
-    private fun postInitialValues() {
-        //isTracking.postValue(false)
-        //pathPoints.postValue(mutableListOf())
-        //polylineFlow.tryEmit(mutableListOf())
+        //val locationFlow = MutableStateFlow(atasehir)
+        lazy
     }
 
     override fun onCreate() {
         super.onCreate()
-        postInitialValues()
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         //    isTracking.observe(this, Observer {
         updateLocationTracking(true)
@@ -112,7 +94,6 @@ class TrackingService : LifecycleService() {
         //    serviceKilled = true
         isFirstRun = true
         pauseService()
-        postInitialValues()
         stopForeground(true)
         stopSelf()
     }
