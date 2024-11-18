@@ -23,7 +23,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
 import com.myprojects.modules.runningtracker.Constants.ACTION_PAUSE_SERVICE
 import com.myprojects.modules.runningtracker.Constants.ACTION_SHOW_TRACKING_FRAGMENT
@@ -41,12 +41,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class TrackingService : LifecycleService() {
     private var isFirstRun = true
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    //private var timeStarted = 0L
 
     companion object {
         val isTracking = MutableStateFlow(false)
         val atasehir = LatLng(0.0, 0.0)
-        //val locationFlow = MutableStateFlow(atasehir)
-        lazy
+        val locationFlow = MutableStateFlow(atasehir)
+        var timeStarted = 0L
     }
 
     override fun onCreate() {
@@ -66,6 +67,8 @@ class TrackingService : LifecycleService() {
                         isFirstRun = false
                     } else {
                         isTracking.value = true
+                        timeStarted = System.currentTimeMillis()
+                        Log.d("--------------", "=$timeStarted")
                     }
                 }
 
@@ -86,7 +89,7 @@ class TrackingService : LifecycleService() {
 
     private fun pauseService() {
         //    isTimerEnabled = false
-        isTracking.value = false
+        isTracking.tryEmit(false)
         addEmptyPolyline()
     }
 
@@ -101,11 +104,11 @@ class TrackingService : LifecycleService() {
     private fun updateLocationTracking(isTracking: Boolean) {
         if (isTracking) {
             if (TrackingUtility.hasLocationPermissions(this) || true) {
-                val request = LocationRequest().apply {
-                    interval = LOCATION_UPDATE_INTERNAL
-                    fastestInterval = FASTEST_LOCATION_INTERNAL
-                    priority = PRIORITY_HIGH_ACCURACY
-                }
+                val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERNAL)
+                    .setWaitForAccurateLocation(false)
+                    .setMinUpdateIntervalMillis(FASTEST_LOCATION_INTERNAL)
+                    .setMaxUpdateDelayMillis(LOCATION_UPDATE_INTERNAL)
+                    .build()
                 if (ActivityCompat.checkSelfPermission(
                         this,
                         Manifest.permission.ACCESS_FINE_LOCATION
@@ -143,7 +146,9 @@ class TrackingService : LifecycleService() {
                 p0.locations.let { locations ->
                     for (location in locations) {
                         Log.d("----------", "callback------")
-                        addPathPoint(location)
+                        //addPathPoint(location)
+                        locationFlow.tryEmit(LatLng(location.latitude, location.longitude))
+                        //send(location)
                     }
                 }
             }

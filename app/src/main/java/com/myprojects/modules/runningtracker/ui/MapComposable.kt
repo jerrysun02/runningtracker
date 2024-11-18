@@ -32,6 +32,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.myprojects.modules.runningtracker.Constants.ACTION_PAUSE_SERVICE
 import com.myprojects.modules.runningtracker.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.myprojects.modules.runningtracker.Constants.ACTION_STOP_SERVICE
+import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.services.TrackingService
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 import kotlinx.coroutines.launch
@@ -48,6 +49,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val location by viewmodel.locationFlow.collectAsState()
     val isTracking = TrackingService.isTracking.collectAsState()
     var text2 by remember { mutableStateOf("Start") }
+    var text3 by remember { mutableStateOf("Stop") }
     val context = LocalContext.current
 
     fun startOrResumeTrackingService() {
@@ -63,11 +65,22 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
             context.startService(it)
         }
 
-    fun stopTrackingService() =
+    fun stopTrackingService() {
+        val run = Run(
+            null,
+            TrackingService.timeStarted,
+            0f,
+            0,
+            0,
+            0
+        )
+        viewmodel.insertRun(run)
+
         Intent(context, TrackingService::class.java).also {
             it.action = ACTION_STOP_SERVICE
             context.startService(it)
         }
+    }
 
     LaunchedEffect(Unit) {
         viewmodel.getLocationFlow()
@@ -135,9 +148,10 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                 coroutineScope.launch {
                     stopTrackingService()
                 }
+                text2 = "Start"
             }
         ) {
-            Text(text = "Stop")
+            Text(text = text3)
         }
     }
 }
