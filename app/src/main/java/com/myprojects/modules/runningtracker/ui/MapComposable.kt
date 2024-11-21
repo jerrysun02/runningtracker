@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -40,16 +39,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val coroutineScope = rememberCoroutineScope()
-
-    val atasehir = LatLng(49.2510221, -123.00441)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(atasehir, 12f)
-    }
-    val polyLines by viewmodel.polyLineFlow.collectAsState()
+    val cameraPositionState = rememberCameraPositionState()
     val location by viewmodel.locationFlow.collectAsState()
     val isTracking = TrackingService.isTracking.collectAsState()
     var text2 by remember { mutableStateOf("Start") }
     var text3 by remember { mutableStateOf("Stop") }
+    var button1Enabled by remember { mutableStateOf(true) }
+    var button2Enabled by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     fun startOrResumeTrackingService() {
@@ -97,20 +93,19 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
 
         location?.let {
             cameraPositionState.position =
-                CameraPosition.fromLatLngZoom(location!!, 12f)
+                CameraPosition.fromLatLngZoom(location!!, 15f)
             Log.d("------------", "camera=${location}")
         }
 
-
-        if (polyLines.isNotEmpty()) {
-            Log.d("------------", "compose lines=$polyLines")
+        if (viewmodel.polyLines.isNotEmpty()) {
+            Log.d("------------", "compose lines=$(viewmodel.polyLines)")
             Marker(
                 state = MarkerState(position = cameraPositionState.position.target),
                 title = ""
             )
-            for (polyLine in polyLines) {
+            for (polyLine in viewmodel.polyLines) {
                 Polyline(
-                    points = polyLine.toList(), color = Color.Red, width = 7f
+                    points = polyLine.toList(), color = Color.Red, width = 12f
                 )
                 Log.d("------------", "compose**line=$polyLine")
             }
@@ -127,7 +122,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
             onClick = {
                 if (isTracking.value) {
                     Log.d("---------", "Pause...${isTracking.value}")
-                    text2 = "Start"
+                    text2 = "Resume"
                     coroutineScope.launch {
                         pauseTrackingService()
                     }
@@ -138,7 +133,9 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                     }
                     text2 = "Pause"
                 }
-            }
+                button2Enabled = true
+            },
+            enabled = button1Enabled
         ) {
             Text(text = text2)
         }
@@ -149,7 +146,9 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                     stopTrackingService()
                 }
                 text2 = "Start"
-            }
+                button2Enabled = false
+            },
+            enabled = button2Enabled
         ) {
             Text(text = text3)
         }

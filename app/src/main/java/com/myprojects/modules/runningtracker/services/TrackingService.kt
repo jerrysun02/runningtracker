@@ -7,17 +7,18 @@ import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.location.Location
+import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import androidx.lifecycle.LifecycleService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -36,26 +37,26 @@ import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_NAME
 import com.myprojects.modules.runningtracker.R
 import com.myprojects.modules.runningtracker.TrackingUtility
 import com.myprojects.modules.runningtracker.ui.MainActivity
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 
-class TrackingService : LifecycleService() {
+class TrackingService : Service() {
     private var isFirstRun = true
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-    //private var timeStarted = 0L
 
     companion object {
         val isTracking = MutableStateFlow(false)
-        val atasehir = LatLng(0.0, 0.0)
-        val locationFlow = MutableStateFlow(atasehir)
+        val locationFlow = MutableStateFlow<LatLng?>(null)
         var timeStarted = 0L
     }
 
     override fun onCreate() {
         super.onCreate()
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        //    isTracking.observe(this, Observer {
         updateLocationTracking(true)
-        //    })
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -87,7 +88,11 @@ class TrackingService : LifecycleService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun pauseService() {
+    override fun onBind(p0: Intent?): IBinder? {
+        TODO("Not yet implemented")
+    }
+
+    fun pauseService() {
         //    isTimerEnabled = false
         isTracking.tryEmit(false)
         addEmptyPolyline()
@@ -104,7 +109,10 @@ class TrackingService : LifecycleService() {
     private fun updateLocationTracking(isTracking: Boolean) {
         if (isTracking) {
             if (TrackingUtility.hasLocationPermissions(this) || true) {
-                val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERNAL)
+                val request = LocationRequest.Builder(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    LOCATION_UPDATE_INTERNAL
+                )
                     .setWaitForAccurateLocation(false)
                     .setMinUpdateIntervalMillis(FASTEST_LOCATION_INTERNAL)
                     .setMaxUpdateDelayMillis(LOCATION_UPDATE_INTERNAL)
@@ -229,4 +237,46 @@ class TrackingService : LifecycleService() {
         )
         notificationManager.createNotificationChannel(channel)
     }
+
+    //private val client: FusedLocationProviderClient by lazy {
+    //    LocationServices.getFusedLocationProviderClient(context)
+    // }
+
+   /* @SuppressLint("MissingPermission")
+    fun listenToLocation(): Flow<LatLng> {
+        Log.d("-------------", "new loc ....")
+        val request =
+            LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERNAL)
+                .setWaitForAccurateLocation(false)
+                .setMinUpdateIntervalMillis(FASTEST_LOCATION_INTERNAL)
+                .setMaxUpdateDelayMillis(LOCATION_UPDATE_INTERNAL)
+                .build()
+
+        return callbackFlow {
+            //if (!hasLocationPermission()) throw NoPermissionsException
+            val locationCallback2 = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+                    super.onLocationResult(result)
+                    result.lastLocation?.let {
+                        launch {
+                            val loc = LatLng(it.latitude, it.longitude)
+                            send(loc)
+                            Log.d("-------------", "new loc $loc")
+                        }
+                    }
+                }
+            }
+
+            fusedLocationProviderClient.requestLocationUpdates(
+                request,
+                locationCallback2,
+                Looper.getMainLooper()
+            )
+
+            awaitClose {
+                // No one listens to flow anymore
+                fusedLocationProviderClient.removeLocationUpdates(locationCallback2)
+            }
+        }
+    }*/
 }

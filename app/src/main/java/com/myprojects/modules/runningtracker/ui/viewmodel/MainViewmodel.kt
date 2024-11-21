@@ -1,6 +1,5 @@
 package com.myprojects.modules.runningtracker.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
@@ -17,23 +16,18 @@ import javax.inject.Inject
 class MainViewmodel @Inject constructor(
     private val mainRepository: MainRepository
 ) : ViewModel() {
-    var atasehir = LatLng(49.2510221, -123.00441)
-    private val _locationFlow = MutableStateFlow<LatLng>(atasehir)
+    private val _locationFlow = MutableStateFlow<LatLng?>(null)
     val locationFlow: StateFlow<LatLng?> = _locationFlow
-
-    private val _polyLineFlow = MutableStateFlow<List<List<LatLng>>>(emptyList())
-    val polyLineFlow: StateFlow<List<List<LatLng>>> = _polyLineFlow
-    val polyLines = mutableListOf(mutableListOf(atasehir))
+    val polyLines = mutableListOf(mutableListOf<LatLng>())
 
     fun getLocationFlow() {
         viewModelScope.launch {
             TrackingService.locationFlow.collect {
-                if (it != LatLng(0.0, 0.0)) {
-                    Log.d("--------", "viewmodel pos=$it size=${polyLines.size}")
+                if (it != null) {
+                    //Log.d("--------", "viewmodel pos=$it size=${polyLines.size}")
                     polyLines.last().add(it)
-                    Log.d("--------", "viewmodel lines=$polyLines")
+                    //Log.d("--------", "viewmodel lines=$polyLines")
                     _locationFlow.tryEmit(it)
-                    _polyLineFlow.tryEmit(polyLines.toList())
                 }
             }
         }
@@ -41,10 +35,10 @@ class MainViewmodel @Inject constructor(
             TrackingService.isTracking.collect {
                 if (it) {
                     polyLines.add(mutableListOf())
-                    Log.d(
-                        "------------",
-                        "isTracking=true size=${polyLines.size}-${polyLines.last().size}"
-                    )
+                    //Log.d(
+                    //    "------------",
+                    //    "isTracking=true size=${polyLines.size}-${polyLines.last().size}"
+                    //)
                 }
             }
         }
@@ -52,6 +46,7 @@ class MainViewmodel @Inject constructor(
 
     fun insertRun(run: Run) = viewModelScope.launch {
         mainRepository.insertRun(run)
+        polyLines.clear()
     }
 
     fun deleteRun(run: Run) = viewModelScope.launch {
