@@ -1,6 +1,7 @@
 package com.myprojects.modules.runningtracker.ui
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,15 +17,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.myprojects.modules.runningtracker.Constants.ACTION_START_OR_RESUME_SERVICE
+import com.myprojects.modules.runningtracker.services.TrackingService
 import com.myprojects.modules.runningtracker.ui.theme.RunningTrackerTheme
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val context = this@MainActivity
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //val viewModel: MainViewmodel by viewModels()
 
         val locationPermissionRequest = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -32,6 +36,7 @@ class MainActivity : ComponentActivity() {
             when {
                 permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
                     // Precise location access granted.
+                    startOrResumeTrackingService()
                 }
 
                 permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
@@ -50,17 +55,11 @@ class MainActivity : ComponentActivity() {
             )
         )
 
-        //Intent(this, TrackingService::class.java).also {
-        //    it.action = ACTION_START_OR_RESUME_SERVICE
-        //    this.startService(it)
-        //}
-
         enableEdgeToEdge()
         setContent {
             RunningTrackerTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    // color = MaterialTheme.colorScheme.background
                 ) {
                     Column(
                         modifier = Modifier.padding(it)
@@ -71,6 +70,13 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun startOrResumeTrackingService() {
+        Intent(context, TrackingService::class.java).also {
+            it.action = ACTION_START_OR_RESUME_SERVICE
+            context.startService(it)
+        }
+    }
 }
 
 @Composable
@@ -79,7 +85,7 @@ fun Navigation() {
     val viewmodel: MainViewmodel = viewModel()
     NavHost(navController = navController, startDestination = Routes.Login.route) {
         composable(Routes.Login.route) {
-            StartComposable(navController = navController)
+            RunsComposable(navController = navController, viewmodel)
         }
         composable(Routes.Tracking.route) {
             MapComposable(navController = navController, viewmodel)

@@ -1,5 +1,6 @@
 package com.myprojects.modules.runningtracker.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
@@ -7,9 +8,12 @@ import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.repository.MainRepository
 import com.myprojects.modules.runningtracker.services.TrackingService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,12 +24,25 @@ class MainViewmodel @Inject constructor(
     val locationFlow: StateFlow<LatLng?> = _locationFlow
     val polyLines = mutableListOf(mutableListOf<LatLng>())
 
+    // companion object {
+    //     var isTracking = 1
+    // }
+    private val _trackingState = MutableStateFlow(1)
+    val trackingState: StateFlow<Int> = _trackingState
+    var state = 1
+
+    private val _runsFlow = MutableStateFlow<List<Run>>(emptyList())
+    val runsFlow: StateFlow<List<Run>> = _runsFlow
+
     fun getLocationFlow() {
         viewModelScope.launch {
             TrackingService.locationFlow.collect {
                 if (it != null) {
-                    //Log.d("--------", "viewmodel pos=$it size=${polyLines.size}")
-                    polyLines.last().add(it)
+                    Log.d("--------", "vm pos=$it size=${polyLines.size}")
+                    Log.d("--------", "vm isTracking=$state")
+
+                    if (state == 1)
+                        polyLines.last().add(it)
                     //Log.d("--------", "viewmodel lines=$polyLines")
                     _locationFlow.tryEmit(it)
                 }
@@ -33,20 +50,28 @@ class MainViewmodel @Inject constructor(
         }
         viewModelScope.launch {
             TrackingService.isTracking.collect {
-                if (it) {
-                    polyLines.add(mutableListOf())
-                    //Log.d(
-                    //    "------------",
-                    //    "isTracking=true size=${polyLines.size}-${polyLines.last().size}"
-                    //)
-                }
+                _trackingState.tryEmit(it)
+                state = it
+                Log.d("----------", "vm trackingState=$trackingState")
             }
         }
     }
 
+    fun getRunsFlow() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                _runsFlow.value = mainRepository.getAllRunsSortedByDate()
+            }
+        }
+    }
+
+    fun resumeRun() {
+        polyLines.add(mutableListOf())
+    }
+
     fun insertRun(run: Run) = viewModelScope.launch {
         mainRepository.insertRun(run)
-        polyLines.clear()
+        //polyLines.clear()
     }
 
     fun deleteRun(run: Run) = viewModelScope.launch {

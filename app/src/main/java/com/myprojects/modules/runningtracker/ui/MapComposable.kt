@@ -41,9 +41,9 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val coroutineScope = rememberCoroutineScope()
     val cameraPositionState = rememberCameraPositionState()
     val location by viewmodel.locationFlow.collectAsState()
-    val isTracking = TrackingService.isTracking.collectAsState()
-    var text2 by remember { mutableStateOf("Start") }
-    var text3 by remember { mutableStateOf("Stop") }
+    val trackingState by viewmodel.trackingState.collectAsState()
+    var textLeft by remember { mutableStateOf("Pause") }
+    var textRight by remember { mutableStateOf("Stop") }
     var button1Enabled by remember { mutableStateOf(true) }
     var button2Enabled by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -55,13 +55,25 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
         }
     }
 
-    fun pauseTrackingService() =
+    fun pauseTracking() {
+        Log.d("------------", "compose pause")
         Intent(context, TrackingService::class.java).also {
             it.action = ACTION_PAUSE_SERVICE
             context.startService(it)
         }
+    }
+
+    fun resumeTracking() {
+        Log.d("------------", "compose resume")
+        viewmodel.resumeRun()
+        Intent(context, TrackingService::class.java).also {
+            it.action = ACTION_START_OR_RESUME_SERVICE
+            context.startService(it)
+        }
+    }
 
     fun stopTrackingService() {
+        Log.d("------------", "compose stop")
         val run = Run(
             null,
             TrackingService.timeStarted,
@@ -71,6 +83,8 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
             0
         )
         viewmodel.insertRun(run)
+
+        navController.navigate(route = Routes.Login.route)
 
         Intent(context, TrackingService::class.java).also {
             it.action = ACTION_STOP_SERVICE
@@ -94,11 +108,10 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
         location?.let {
             cameraPositionState.position =
                 CameraPosition.fromLatLngZoom(location!!, 15f)
-            Log.d("------------", "camera=${location}")
         }
 
         if (viewmodel.polyLines.isNotEmpty()) {
-            Log.d("------------", "compose lines=$(viewmodel.polyLines)")
+            //Log.d("------------", "compose lines=$(viewmodel.polyLines)")
             Marker(
                 state = MarkerState(position = cameraPositionState.position.target),
                 title = ""
@@ -107,7 +120,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                 Polyline(
                     points = polyLine.toList(), color = Color.Red, width = 12f
                 )
-                Log.d("------------", "compose**line=$polyLine")
+                //Log.d("------------", "compose**line=$polyLine")
             }
         }
     }
@@ -120,24 +133,18 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     ) {
         Button(
             onClick = {
-                if (isTracking.value) {
-                    Log.d("---------", "Pause...${isTracking.value}")
-                    text2 = "Resume"
-                    coroutineScope.launch {
-                        pauseTrackingService()
-                    }
+                if (trackingState == 1) {
+                    textLeft = "Resume"
+                    pauseTracking()
                 } else {
-                    Log.d("---------", "Start...${isTracking.value}")
-                    coroutineScope.launch {
-                        startOrResumeTrackingService()
-                    }
-                    text2 = "Pause"
+                    textLeft = "Pause"
+                    resumeTracking()
                 }
                 button2Enabled = true
             },
             enabled = button1Enabled
         ) {
-            Text(text = text2)
+            Text(text = textLeft)
         }
 
         Button(
@@ -145,12 +152,12 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                 coroutineScope.launch {
                     stopTrackingService()
                 }
-                text2 = "Start"
+                textLeft = "Start"
                 button2Enabled = false
             },
             enabled = button2Enabled
         ) {
-            Text(text = text3)
+            Text(text = textRight)
         }
     }
 }

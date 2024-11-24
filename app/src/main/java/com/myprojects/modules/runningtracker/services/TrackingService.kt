@@ -19,6 +19,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -37,10 +38,10 @@ import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_NAME
 import com.myprojects.modules.runningtracker.R
 import com.myprojects.modules.runningtracker.TrackingUtility
 import com.myprojects.modules.runningtracker.ui.MainActivity
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class TrackingService : Service() {
@@ -48,7 +49,7 @@ class TrackingService : Service() {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     companion object {
-        val isTracking = MutableStateFlow(false)
+        val isTracking = MutableStateFlow(1)
         val locationFlow = MutableStateFlow<LatLng?>(null)
         var timeStarted = 0L
     }
@@ -56,7 +57,12 @@ class TrackingService : Service() {
     override fun onCreate() {
         super.onCreate()
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        updateLocationTracking(true)
+        CoroutineScope(Dispatchers.Main).launch {
+            isTracking.collect {
+                updateLocationTracking(it)
+            }
+            Log.d("-----------", "service onCreate isTracking=${isTracking.value}")
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -67,9 +73,8 @@ class TrackingService : Service() {
                         startForegroundService()
                         isFirstRun = false
                     } else {
-                        isTracking.value = true
+                        isTracking.value = 1
                         timeStarted = System.currentTimeMillis()
-                        Log.d("--------------", "=$timeStarted")
                     }
                 }
 
@@ -92,22 +97,30 @@ class TrackingService : Service() {
         TODO("Not yet implemented")
     }
 
-    fun pauseService() {
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("----------", "destroyed...")
+    }
+
+    private fun pauseService() {
         //    isTimerEnabled = false
-        isTracking.tryEmit(false)
+        Log.d("----------", "pause...")
+        isTracking.tryEmit(2)
         addEmptyPolyline()
     }
 
     private fun killService() {
         //    serviceKilled = true
         isFirstRun = true
-        pauseService()
+        //pauseService()
+        isTracking.tryEmit(0)
         stopForeground(true)
         stopSelf()
     }
 
-    private fun updateLocationTracking(isTracking: Boolean) {
-        if (isTracking) {
+    private fun updateLocationTracking(isTracking: Int) {
+        Log.d("---------", "service updateLocTracking isTracking=$isTracking")
+        if (isTracking != 0) {
             if (TrackingUtility.hasLocationPermissions(this) || true) {
                 val request = LocationRequest.Builder(
                     Priority.PRIORITY_HIGH_ACCURACY,
@@ -150,16 +163,16 @@ class TrackingService : Service() {
         override fun onLocationResult(p0: LocationResult) {
             super.onLocationResult(p0)
             //    Log.d("----------", "callback")
-            if (isTracking.value) {
-                p0.locations.let { locations ->
-                    for (location in locations) {
-                        Log.d("----------", "callback------")
-                        //addPathPoint(location)
-                        locationFlow.tryEmit(LatLng(location.latitude, location.longitude))
-                        //send(location)
-                    }
+            //    if (isTracking.value) {
+            p0.locations.let { locations ->
+                for (location in locations) {
+                    Log.d("----------", "callback------")
+                    //addPathPoint(location)
+                    locationFlow.tryEmit(LatLng(location.latitude, location.longitude))
+                    //send(location)
                 }
             }
+            //    }
         }
     }
 
@@ -199,7 +212,7 @@ class TrackingService : Service() {
     @SuppressLint("InlinedApi")
     private fun startForegroundService() {
         //    addEmptyPolyline()
-        isTracking.value = true
+        //    isTracking.value = true
 
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -237,46 +250,4 @@ class TrackingService : Service() {
         )
         notificationManager.createNotificationChannel(channel)
     }
-
-    //private val client: FusedLocationProviderClient by lazy {
-    //    LocationServices.getFusedLocationProviderClient(context)
-    // }
-
-   /* @SuppressLint("MissingPermission")
-    fun listenToLocation(): Flow<LatLng> {
-        Log.d("-------------", "new loc ....")
-        val request =
-            LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERNAL)
-                .setWaitForAccurateLocation(false)
-                .setMinUpdateIntervalMillis(FASTEST_LOCATION_INTERNAL)
-                .setMaxUpdateDelayMillis(LOCATION_UPDATE_INTERNAL)
-                .build()
-
-        return callbackFlow {
-            //if (!hasLocationPermission()) throw NoPermissionsException
-            val locationCallback2 = object : LocationCallback() {
-                override fun onLocationResult(result: LocationResult) {
-                    super.onLocationResult(result)
-                    result.lastLocation?.let {
-                        launch {
-                            val loc = LatLng(it.latitude, it.longitude)
-                            send(loc)
-                            Log.d("-------------", "new loc $loc")
-                        }
-                    }
-                }
-            }
-
-            fusedLocationProviderClient.requestLocationUpdates(
-                request,
-                locationCallback2,
-                Looper.getMainLooper()
-            )
-
-            awaitClose {
-                // No one listens to flow anymore
-                fusedLocationProviderClient.removeLocationUpdates(locationCallback2)
-            }
-        }
-    }*/
 }
