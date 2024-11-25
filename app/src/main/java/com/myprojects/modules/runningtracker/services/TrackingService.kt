@@ -5,8 +5,6 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
-import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -26,7 +24,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
 import com.myprojects.modules.runningtracker.Constants.ACTION_PAUSE_SERVICE
-import com.myprojects.modules.runningtracker.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import com.myprojects.modules.runningtracker.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.myprojects.modules.runningtracker.Constants.ACTION_STOP_SERVICE
 import com.myprojects.modules.runningtracker.Constants.FASTEST_LOCATION_INTERNAL
@@ -35,7 +32,6 @@ import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_ID
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_NAME
 import com.myprojects.modules.runningtracker.R
 import com.myprojects.modules.runningtracker.TrackingUtility
-import com.myprojects.modules.runningtracker.ui.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
