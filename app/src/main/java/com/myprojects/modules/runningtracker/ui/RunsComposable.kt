@@ -6,8 +6,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.paddingFromBaseline
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
@@ -26,6 +32,7 @@ import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
     val runsFlow by viewmodel.runsFlow.collectAsState()
+    val state = rememberScrollState()
 
     LaunchedEffect(Unit) {
         viewmodel.getRunsFlow()
@@ -38,21 +45,26 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        runsFlow.let {
-            Log.d("--------", "runs: ${it.size}")
-            it.forEach {
-                Row {
-                    RunCard(it)
-                }
-            }
-        }
         Button(
             onClick = {
                 viewmodel.startRun()
                 navController.navigate(route = Routes.Tracking.route)
             }
         ) {
-            Text("New...")
+            Text("New Run")
+        }
+        Column(
+            modifier = Modifier
+                .verticalScroll(state)
+        ) {
+            runsFlow.let {
+                Log.d("--------", "runs: ${it.size}")
+                it.forEach {
+                    Row {
+                        RunCard(it)
+                    }
+                }
+            }
         }
     }
 }
@@ -62,7 +74,7 @@ fun RunCard(run: Run) {
     Card(
         modifier = Modifier
             .padding(4.dp)
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(1.dp))
     ) {
         Text(
             modifier = Modifier.padding(8.dp),
