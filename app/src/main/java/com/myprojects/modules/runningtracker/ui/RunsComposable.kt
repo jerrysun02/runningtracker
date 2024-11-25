@@ -1,19 +1,12 @@
 package com.myprojects.modules.runningtracker.ui
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFromBaseline
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
@@ -32,38 +25,37 @@ import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
     val runsFlow by viewmodel.runsFlow.collectAsState()
-    val state = rememberScrollState()
 
     LaunchedEffect(Unit) {
         viewmodel.getRunsFlow()
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(
-            onClick = {
-                viewmodel.startRun()
-                navController.navigate(route = Routes.Tracking.route)
-            }
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(
+                horizontal = 1.dp,
+                vertical = 1.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
-            Text("New Run")
-        }
-        Column(
-            modifier = Modifier
-                .verticalScroll(state)
-        ) {
-            runsFlow.let {
-                Log.d("--------", "runs: ${it.size}")
-                it.forEach {
-                    Row {
-                        RunCard(it)
-                    }
+            runsFlow.forEach {
+                item {
+                    RunCard(it)
                 }
+            }
+        }
+
+        Column {
+            Button(
+                onClick = {
+                    viewmodel.startRun()
+                    navController.navigate(route = Routes.Tracking.route)
+                }
+            ) {
+                Text("New Run")
             }
         }
     }
@@ -73,24 +65,24 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
 fun RunCard(run: Run) {
     Card(
         modifier = Modifier
+            .fillMaxWidth()
             .padding(4.dp)
             .clip(RoundedCornerShape(1.dp))
     ) {
         Text(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(6.dp),
             text = buildString {
                 append(run.id)
                 append(". ")
                 append(run.start)
                 append(" - ")
                 append(run.end)
-                //append(run. timeStamp)
             }
         )
     }
 }
 
 sealed class Routes(val route: String) {
-    object Login : Routes("Login")
-    object Tracking : Routes("Tracking")
+    data object Login : Routes("Login")
+    data object Tracking : Routes("Tracking")
 }
