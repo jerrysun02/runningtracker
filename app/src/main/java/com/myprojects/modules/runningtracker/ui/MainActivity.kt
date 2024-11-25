@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
             when {
                 permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
                     // Precise location access granted.
-                //    startOrResumeTrackingService()
+                    //    startOrResumeTrackingService()
                     viewmodel.startRun()
                 }
 
@@ -71,13 +71,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-    }
-
-    private fun startOrResumeTrackingService() {
-        Intent(context, TrackingService::class.java).also {
-            it.action = ACTION_START_OR_RESUME_SERVICE
-            context.startService(it)
         }
     }
 }

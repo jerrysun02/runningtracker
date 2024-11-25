@@ -41,7 +41,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.time.format.DateTimeFormatter
 import java.util.Date
 
 class TrackingService : Service() {
@@ -111,7 +110,7 @@ class TrackingService : Service() {
     private fun killService() {
         isFirstRun = true
         isTracking.tryEmit(0)
-        stopForeground(true)
+        //stopForeground(true)
         stopSelf()
     }
 
@@ -190,15 +189,6 @@ class TrackingService : Service() {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
         )
     }
-
-    private fun getMainActivityPendingIntent() = PendingIntent.getActivity(
-        this,
-        0,
-        Intent(this, MainActivity::class.java).also {
-            it.action = ACTION_SHOW_TRACKING_FRAGMENT
-        },
-        FLAG_UPDATE_CURRENT
-    )
 
     private fun createNotificationChannel(notificationManager: NotificationManager) {
         val channel = NotificationChannel(

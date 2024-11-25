@@ -1,5 +1,6 @@
 package com.myprojects.modules.runningtracker.ui
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -48,20 +49,13 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val location by viewmodel.locationFlow.collectAsState()
     val trackingState by viewmodel.trackingState.collectAsState()
     var textLeft by remember { mutableStateOf("Pause") }
-    var textRight by remember { mutableStateOf("Stop") }
-    var button1Enabled by remember { mutableStateOf(true) }
+    val textRight by remember { mutableStateOf("Stop") }
+    val button1Enabled by remember { mutableStateOf(true) }
     var button2Enabled by remember { mutableStateOf(true) }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         //viewmodel.startRun()
-    }
-
-    fun startOrResumeTrackingService() {
-        Intent(context, TrackingService::class.java).also {
-            it.action = ACTION_START_OR_RESUME_SERVICE
-            context.startService(it)
-        }
     }
 
     fun pauseTracking() {
@@ -81,6 +75,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
         }
     }
 
+    @SuppressLint("SimpleDateFormat")
     fun stopTrackingService() {
         Log.d("------------", "compose stop")
         val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
