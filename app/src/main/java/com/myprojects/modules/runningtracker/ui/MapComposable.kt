@@ -33,8 +33,13 @@ import com.myprojects.modules.runningtracker.Constants.ACTION_START_OR_RESUME_SE
 import com.myprojects.modules.runningtracker.Constants.ACTION_STOP_SERVICE
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.services.TrackingService
+import com.myprojects.modules.runningtracker.services.TrackingService.Companion.end
+import com.myprojects.modules.runningtracker.services.TrackingService.Companion.start
+import com.myprojects.modules.runningtracker.services.TrackingService.Companion.timeStarted
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @Composable
 fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
@@ -45,8 +50,12 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     var textLeft by remember { mutableStateOf("Pause") }
     var textRight by remember { mutableStateOf("Stop") }
     var button1Enabled by remember { mutableStateOf(true) }
-    var button2Enabled by remember { mutableStateOf(false) }
+    var button2Enabled by remember { mutableStateOf(true) }
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        //viewmodel.startRun()
+    }
 
     fun startOrResumeTrackingService() {
         Intent(context, TrackingService::class.java).also {
@@ -74,9 +83,13 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
 
     fun stopTrackingService() {
         Log.d("------------", "compose stop")
+        val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
+        end = sdf.format(Date())
         val run = Run(
+            start,
+            end,
             null,
-            TrackingService.timeStarted,
+            timeStarted,
             0f,
             0,
             0,

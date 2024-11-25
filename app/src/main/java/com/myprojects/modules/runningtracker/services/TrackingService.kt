@@ -12,14 +12,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
-import android.location.Location
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -41,8 +39,10 @@ import com.myprojects.modules.runningtracker.ui.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.util.Date
 
 class TrackingService : Service() {
     private var isFirstRun = true
@@ -52,6 +52,8 @@ class TrackingService : Service() {
         val isTracking = MutableStateFlow(1)
         val locationFlow = MutableStateFlow<LatLng?>(null)
         var timeStarted = 0L
+        var start = ""
+        var end = ""
     }
 
     override fun onCreate() {
@@ -61,10 +63,10 @@ class TrackingService : Service() {
             isTracking.collect {
                 updateLocationTracking(it)
             }
-            Log.d("-----------", "service onCreate isTracking=${isTracking.value}")
         }
     }
 
+    @SuppressLint("SimpleDateFormat")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
             when (it.action) {
@@ -72,9 +74,14 @@ class TrackingService : Service() {
                     if (isFirstRun) {
                         startForegroundService()
                         isFirstRun = false
+                        Log.d("------", "service: start isTracking = 1 first")
                     } else {
                         isTracking.value = 1
                         timeStarted = System.currentTimeMillis()
+
+                        val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
+                        start = sdf.format(Date())
+                        Log.d("------", "service: start isTracking = 1")
                     }
                 }
 
@@ -97,22 +104,12 @@ class TrackingService : Service() {
         TODO("Not yet implemented")
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d("----------", "destroyed...")
-    }
-
     private fun pauseService() {
-        //    isTimerEnabled = false
-        Log.d("----------", "pause...")
         isTracking.tryEmit(2)
-        addEmptyPolyline()
     }
 
     private fun killService() {
-        //    serviceKilled = true
         isFirstRun = true
-        //pauseService()
         isTracking.tryEmit(0)
         stopForeground(true)
         stopSelf()
@@ -162,57 +159,18 @@ class TrackingService : Service() {
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(p0: LocationResult) {
             super.onLocationResult(p0)
-            //    Log.d("----------", "callback")
-            //    if (isTracking.value) {
             p0.locations.let { locations ->
                 for (location in locations) {
                     Log.d("----------", "callback------")
-                    //addPathPoint(location)
                     locationFlow.tryEmit(LatLng(location.latitude, location.longitude))
-                    //send(location)
                 }
             }
-            //    }
         }
     }
-
-    private fun addEmptyPolyline() {
-        //lines.add(mutableListOf())
-        //Log.d("-----------", "add empty =$lines")
-        //polylineFlow.tryEmit(lines.toList())
-    }
-
-    private fun addPathPoint(location: Location?) {
-        location?.let {
-            val pos = LatLng(location.latitude, location.longitude)
-            // pathPoints.value?.apply {
-            //     last().add(pos)
-            //     pathPoints.postValue(this)
-            //     pathPointsFlow.tryEmit(pos)
-
-            //     polyLinesFlow.tryEmit(this)
-            //lines.last().add(pos)
-            //val l = lines.toList().toList()
-            //Log.d("-------------", "addPath....size=${lines.size}")
-            //polylineFlow.tryEmit(lines)
-            locationFlow.tryEmit(pos)
-
-
-            Log.d("----------", "emit pos=${pos}")
-
-            //}
-        }
-    }
-
-    //private fun addEmptyPolyline() = pathPoints.value?.apply {
-    //    add(mutableListOf())
-    //    pathPoints.postValue(this)
-    //} ?: pathPoints.postValue(mutableListOf(mutableListOf()))
 
     @SuppressLint("InlinedApi")
     private fun startForegroundService() {
-        //    addEmptyPolyline()
-        //    isTracking.value = true
+        isTracking.value = 1
 
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

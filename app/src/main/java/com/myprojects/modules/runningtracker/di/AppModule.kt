@@ -1,6 +1,7 @@
 package com.myprojects.modules.runningtracker.di
 
 import android.app.Application
+import android.content.Context
 import androidx.room.Room
 import com.myprojects.modules.runningtracker.Constants.RUNNING_DATABASE_NAME
 import com.myprojects.modules.runningtracker.db.RunDAO
@@ -27,4 +28,8 @@ object AppModule {
     fun providesRunDao(db: RunningDatabase): RunDAO {
         return db.getRunDao()
     }
+
+    @Singleton
+    @Provides
+    fun providesContext(app: Application): Context = app.applicationContext
 }

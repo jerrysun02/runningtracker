@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 
 @Composable
@@ -38,23 +39,26 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         runsFlow.let {
-            Log.d("------", "runs: ${it.size}")
+            Log.d("--------", "runs: ${it.size}")
             it.forEach {
                 Row {
-                    RunCard(it.id, it.timestamp)
+                    RunCard(it)
                 }
             }
         }
         Button(
-            onClick = { navController.navigate(route = Routes.Tracking.route) }
+            onClick = {
+                viewmodel.startRun()
+                navController.navigate(route = Routes.Tracking.route)
+            }
         ) {
-            Text("Get started...")
+            Text("New...")
         }
     }
 }
 
 @Composable
-fun RunCard(id: Int, timeStamp: Long) {
+fun RunCard(run: Run) {
     Card(
         modifier = Modifier
             .padding(4.dp)
@@ -63,9 +67,12 @@ fun RunCard(id: Int, timeStamp: Long) {
         Text(
             modifier = Modifier.padding(8.dp),
             text = buildString {
-                append(id)
+                append(run.id)
                 append(". ")
-                append(timeStamp)
+                append(run.start)
+                append(" - ")
+                append(run.end)
+                //append(run. timeStamp)
             }
         )
     }

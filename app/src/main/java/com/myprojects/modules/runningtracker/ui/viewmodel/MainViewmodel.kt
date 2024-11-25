@@ -8,7 +8,6 @@ import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.repository.MainRepository
 import com.myprojects.modules.runningtracker.services.TrackingService
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,9 +23,6 @@ class MainViewmodel @Inject constructor(
     val locationFlow: StateFlow<LatLng?> = _locationFlow
     val polyLines = mutableListOf(mutableListOf<LatLng>())
 
-    // companion object {
-    //     var isTracking = 1
-    // }
     private val _trackingState = MutableStateFlow(1)
     val trackingState: StateFlow<Int> = _trackingState
     var state = 1
@@ -43,7 +39,6 @@ class MainViewmodel @Inject constructor(
 
                     if (state == 1)
                         polyLines.last().add(it)
-                    //Log.d("--------", "viewmodel lines=$polyLines")
                     _locationFlow.tryEmit(it)
                 }
             }
@@ -52,7 +47,6 @@ class MainViewmodel @Inject constructor(
             TrackingService.isTracking.collect {
                 _trackingState.tryEmit(it)
                 state = it
-                Log.d("----------", "vm trackingState=$trackingState")
             }
         }
     }
@@ -69,9 +63,15 @@ class MainViewmodel @Inject constructor(
         polyLines.add(mutableListOf())
     }
 
+    fun startRun() {
+        polyLines.add(mutableListOf())
+        mainRepository.startLocationService()
+
+    }
+
     fun insertRun(run: Run) = viewModelScope.launch {
         mainRepository.insertRun(run)
-        //polyLines.clear()
+        polyLines.clear()
     }
 
     fun deleteRun(run: Run) = viewModelScope.launch {

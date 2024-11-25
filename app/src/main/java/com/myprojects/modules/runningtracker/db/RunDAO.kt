@@ -6,8 +6,6 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import dagger.Provides
-import dagger.hilt.android.lifecycle.HiltViewModel
 
 @Dao
 interface RunDAO {
@@ -17,7 +15,7 @@ interface RunDAO {
     @Delete
     suspend fun deleteRun(run: Run)
 
-    @Query("SELECT * FROM running_table ORDER BY timestamp DESC")
+    @Query("SELECT * FROM running_table ORDER BY id DESC")
     fun getAllRunsSortedByDate(): List<Run>
 
     @Query("SELECT * FROM running_table ORDER BY timeInMillis DESC")
