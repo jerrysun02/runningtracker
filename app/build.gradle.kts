@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.myprojects.modules.runningtracker"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.myprojects.modules.runningtracker"
         minSdk = 28
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -80,6 +80,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.easypermissions.ktx)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.gson)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

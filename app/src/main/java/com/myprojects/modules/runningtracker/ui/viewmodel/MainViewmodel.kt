@@ -30,6 +30,9 @@ class MainViewmodel @Inject constructor(
     private val _runsFlow = MutableStateFlow<List<Run>>(emptyList())
     val runsFlow: StateFlow<List<Run>> = _runsFlow
 
+    private val _routeFlow = MutableStateFlow<List<LatLng>>(emptyList())
+    val routeFlow: StateFlow<List<LatLng>> = _routeFlow
+
     fun getLocationFlow() {
         viewModelScope.launch {
             TrackingService.locationFlow.collect {
@@ -55,6 +58,19 @@ class MainViewmodel @Inject constructor(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 _runsFlow.value = mainRepository.getAllRunsSortedByDate()
+            }
+        }
+    }
+
+    fun getRoute(id: Int) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val route = mainRepository.getRoute(id)
+                route.onEach {run ->
+                    run.locationList.onEach {
+                        polyLines.add(it.toMutableList())
+                    }
+                }
             }
         }
     }

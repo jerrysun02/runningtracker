@@ -18,6 +18,8 @@ class MainRepository @Inject constructor(
 
     fun getAllRunsSortedByDate() = runDAO.getAllRunsSortedByDate()
 
+    fun getRoute(id: Int) = runDAO.getRoute(id)
+
     fun getAllRunsSortedByDistance() = runDAO.getAllRunsSortedByDistance()
 
     fun getAllRunsSortedByTimeInMills() = runDAO.getAllRunsSortedByTimeInMillis()

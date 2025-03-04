@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -40,6 +41,7 @@ import com.myprojects.modules.runningtracker.services.TrackingService.Companion.
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.util.Collections
 import java.util.Date
 
 @Composable
@@ -77,7 +79,16 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
 
     @SuppressLint("SimpleDateFormat")
     fun stopTrackingService() {
-        Log.d("------------", "compose stop")
+        var routines = viewmodel.polyLines
+
+        val loc = mutableListOf(mutableListOf<LatLng>())
+
+        viewmodel.polyLines.forEach {
+            val locations = Collections.unmodifiableList(it)
+            loc.add(locations)
+        }
+
+        Log.d("------------", "compose stop...$loc")
         val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
         end = sdf.format(Date())
         val run = Run(
@@ -88,7 +99,8 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
             0f,
             0,
             0,
-            0
+            0,
+            loc
         )
         viewmodel.insertRun(run)
 

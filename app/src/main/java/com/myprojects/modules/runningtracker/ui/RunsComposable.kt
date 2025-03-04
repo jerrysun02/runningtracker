@@ -1,5 +1,6 @@
 package com.myprojects.modules.runningtracker.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,12 +20,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.android.gms.maps.model.LatLng
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
     val runsFlow by viewmodel.runsFlow.collectAsState()
+
+    fun showRoute(route: List<List<LatLng>>) {
+
+        navController.navigate(route = Routes.Route.route)
+    }
 
     LaunchedEffect(Unit) {
         viewmodel.getRunsFlow()
@@ -43,7 +50,7 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
         ) {
             runsFlow.forEach {
                 item {
-                    RunCard(it)
+                    RunCard(navController, it)
                 }
             }
         }
@@ -62,12 +69,18 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
 }
 
 @Composable
-fun RunCard(run: Run) {
+fun RunCard(navController: NavController, run: Run) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp)
-            .clip(RoundedCornerShape(1.dp))
+            .clip(RoundedCornerShape(1.dp)),
+        onClick = {
+            Log.d("------------", "card clicked...${run.id}")
+            //showRoute(run.locationList)
+            navController.navigate(route = Routes.Route.withArgs(run.id.toString()))
+        }
+
     ) {
         Text(
             modifier = Modifier.padding(6.dp),
@@ -79,10 +92,8 @@ fun RunCard(run: Run) {
                 append(run.end)
             }
         )
+    //    Text(
+    //        text = run.locationList.toString()
+    //    )
     }
-}
-
-sealed class Routes(val route: String) {
-    data object Login : Routes("Login")
-    data object Tracking : Routes("Tracking")
 }

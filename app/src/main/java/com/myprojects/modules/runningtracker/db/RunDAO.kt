@@ -6,6 +6,8 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RunDAO {
@@ -17,6 +19,9 @@ interface RunDAO {
 
     @Query("SELECT * FROM running_table ORDER BY id DESC")
     fun getAllRunsSortedByDate(): List<Run>
+
+    @Query("SELECT * FROM running_table WHERE id = :id LIMIT 1")
+    fun getRoute(id: Int): List<Run>
 
     @Query("SELECT * FROM running_table ORDER BY timeInMillis DESC")
     fun getAllRunsSortedByTimeInMillis(): LiveData<List<Run>>
