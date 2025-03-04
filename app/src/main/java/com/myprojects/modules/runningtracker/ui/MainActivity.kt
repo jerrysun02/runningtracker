@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
                 permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
                     // Precise location access granted.
                     //    startOrResumeTrackingService()
-                    viewmodel.startRun()
+                    //viewmodel.startRun()
                 }
 
                 permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
@@ -88,7 +88,8 @@ fun Navigation() {
         composable(Routes.Tracking.route) {
             MapComposable(navController = navController, viewmodel)
         }
-        composable(route = Routes.Route.route + "/{id}",
+        composable(
+            route = Routes.Route.route + "/{id}",
             arguments = listOf(
                 navArgument("id") {
                     type = NavType.StringType
@@ -96,11 +97,11 @@ fun Navigation() {
                     nullable = true
                 }
             )
-        ) {
-            val id = it.arguments?.getString("id")
-            Log.d("------------", "host...id=${id}")
-            id?.let {
-                RouteComposable(navController = navController, viewmodel, id.toInt())
+        ) { it ->
+       //     Log.d("------------", "host args=${it.arguments.toString()}")
+            it.arguments?.getString("id")?.let {
+       //         Log.d("------------", "host it=$it")
+                RouteComposable(navController = navController, viewmodel, it.toInt())
             }
         }
     }

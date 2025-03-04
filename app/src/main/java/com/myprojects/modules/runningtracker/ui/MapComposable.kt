@@ -81,11 +81,14 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     fun stopTrackingService() {
         var routines = viewmodel.polyLines
 
-        val loc = mutableListOf(mutableListOf<LatLng>())
+        val loc = mutableListOf<MutableList<LatLng>>()
 
         viewmodel.polyLines.forEach {
             val locations = Collections.unmodifiableList(it)
-            loc.add(locations)
+            Log.d("--------------", "stop...loc=$locations")
+            if (locations.size > 0) {
+                loc.add(locations)
+            }
         }
 
         Log.d("------------", "compose stop...$loc")

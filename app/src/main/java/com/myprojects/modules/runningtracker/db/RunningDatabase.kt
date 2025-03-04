@@ -6,11 +6,11 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [Run::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 
-@TypeConverters(Converters::class, RouteConverters::class)
+@TypeConverters(BitmapConverters::class, RouteConverters::class)
 abstract class RunningDatabase : RoomDatabase() {
     abstract fun getRunDao(): RunDAO
 }

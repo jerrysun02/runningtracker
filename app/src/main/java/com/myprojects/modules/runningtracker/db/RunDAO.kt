@@ -6,8 +6,6 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.google.android.gms.maps.model.LatLng
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RunDAO {

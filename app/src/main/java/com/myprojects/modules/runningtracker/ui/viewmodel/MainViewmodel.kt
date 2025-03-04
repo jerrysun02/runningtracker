@@ -63,12 +63,17 @@ class MainViewmodel @Inject constructor(
     }
 
     fun getRoute(id: Int) {
+        Log.d("--------------", "viewmodel getRoute 1111 id=$id")
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val route = mainRepository.getRoute(id)
-                route.onEach {run ->
-                    run.locationList.onEach {
-                        polyLines.add(it.toMutableList())
+                val run = mainRepository.getRoute(id)
+                Log.d("--------------", "viewmodel run.size=${run.size}")
+                run.onEach {
+                    it.locationList.onEach { it1 ->
+                        Log.d("--------------", "viewmodel 222 route=$it1")
+                        if (it1.isNotEmpty()) {
+                            polyLines.add(it1.toMutableList())
+                        }
                     }
                 }
             }

@@ -17,10 +17,7 @@ import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 
 @Composable
 fun RouteComposable(navController: NavController, viewmodel: MainViewmodel, id: Int) {
-
-    Log.d("----------------", "id=$id")
     val cameraPositionState = rememberCameraPositionState()
-
 
     LaunchedEffect(Unit) {
         viewmodel.getRoute(id)
@@ -46,8 +43,8 @@ fun RouteComposable(navController: NavController, viewmodel: MainViewmodel, id: 
                             CameraPosition.fromLatLngZoom(location, 11f)
                     }
                     //cameraPositionState.position =
-                    Log.d("------------", "route compose location=$location")
-                    Log.d("------------", "route compose polyline=$polyLine")
+            //        Log.d("------------", "route compose location=$location")
+            //        Log.d("------------", "route compose polyline=$polyLine")
                 }
             }
         }

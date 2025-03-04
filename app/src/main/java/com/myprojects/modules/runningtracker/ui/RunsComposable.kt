@@ -28,10 +28,9 @@ import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
     val runsFlow by viewmodel.runsFlow.collectAsState()
 
-    fun showRoute(route: List<List<LatLng>>) {
-
-        navController.navigate(route = Routes.Route.route)
-    }
+//    fun showRoute(route: List<List<LatLng>>) {
+//        navController.navigate(route = Routes.Route.route)
+//    }
 
     LaunchedEffect(Unit) {
         viewmodel.getRunsFlow()
@@ -76,7 +75,7 @@ fun RunCard(navController: NavController, run: Run) {
             .padding(4.dp)
             .clip(RoundedCornerShape(1.dp)),
         onClick = {
-            Log.d("------------", "card clicked...${run.id}")
+  //          Log.d("------------", "card clicked...${run.id}")
             //showRoute(run.locationList)
             navController.navigate(route = Routes.Route.withArgs(run.id.toString()))
         }
@@ -92,8 +91,8 @@ fun RunCard(navController: NavController, run: Run) {
                 append(run.end)
             }
         )
-    //    Text(
-    //        text = run.locationList.toString()
-    //    )
+        Text(
+            text = run.locationList.toString()
+        )
     }
 }
