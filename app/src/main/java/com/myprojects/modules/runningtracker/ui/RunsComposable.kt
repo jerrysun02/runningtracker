@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import com.google.android.gms.maps.model.LatLng
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import com.vmadalin.easypermissions.EasyPermissions
 
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
@@ -57,7 +58,14 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
         Column {
             Button(
                 onClick = {
+
+
+
+
                     viewmodel.startRun()
+
+
+
                     navController.navigate(route = Routes.Tracking.route)
                 }
             ) {

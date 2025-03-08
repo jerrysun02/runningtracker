@@ -30,6 +30,7 @@ import com.myprojects.modules.runningtracker.Constants.FASTEST_LOCATION_INTERNAL
 import com.myprojects.modules.runningtracker.Constants.LOCATION_UPDATE_INTERNAL
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_ID
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_NAME
+import com.myprojects.modules.runningtracker.Constants.TAG
 import com.myprojects.modules.runningtracker.R
 import com.myprojects.modules.runningtracker.TrackingUtility
 import kotlinx.coroutines.CoroutineScope
@@ -69,14 +70,14 @@ class TrackingService : Service() {
                     if (isFirstRun) {
                         startForegroundService()
                         isFirstRun = false
-                        Log.d("------", "service: start isTracking = 1 first")
+                        Log.d(TAG, "service: start isTracking = 1 first")
                     } else {
                         isTracking.value = 1
                         timeStarted = System.currentTimeMillis()
 
                         val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
                         start = sdf.format(Date())
-                        Log.d("------", "service: start isTracking = 1")
+                        Log.d(TAG, "service: start isTracking = 1")
                     }
                 }
 
@@ -110,9 +111,10 @@ class TrackingService : Service() {
     }
 
     private fun updateLocationTracking(isTracking: Int) {
-        Log.d("---------", "service updateLocTracking isTracking=$isTracking")
+        Log.d(TAG, "service updateLocTracking isTracking=$isTracking")
+    //    Log.d(TAG, "permission = " + TrackingUtility.hasLocationPermissions(this))
         if (isTracking != 0) {
-            if (TrackingUtility.hasLocationPermissions(this) || true) {
+            if (TrackingUtility.hasLocationPermissions(this)) {
                 val request = LocationRequest.Builder(
                     Priority.PRIORITY_HIGH_ACCURACY,
                     LOCATION_UPDATE_INTERNAL
@@ -131,7 +133,7 @@ class TrackingService : Service() {
                 ) {
                     return
                 }
-                Log.d("--------------", "update location")
+                Log.d(TAG, "update location")
                 fusedLocationProviderClient.requestLocationUpdates(
                     request,
                     locationCallback,
@@ -148,7 +150,7 @@ class TrackingService : Service() {
             super.onLocationResult(p0)
             p0.locations.let { locations ->
                 for (location in locations) {
-                    Log.d("----------", "callback------")
+                    Log.d(TAG, "callback------")
                     locationFlow.tryEmit(LatLng(location.latitude, location.longitude))
                 }
             }

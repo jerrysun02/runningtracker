@@ -57,7 +57,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        //viewmodel.startRun()
+       // viewmodel.startRun()
     }
 
     fun pauseTracking() {

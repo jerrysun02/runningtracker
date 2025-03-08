@@ -21,8 +21,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.android.gms.maps.model.LatLng
+import com.myprojects.modules.runningtracker.Constants.TAG
+import com.myprojects.modules.runningtracker.TrackingUtility
 import com.myprojects.modules.runningtracker.ui.theme.RunningTrackerTheme
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import com.vmadalin.easypermissions.EasyPermissions
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -49,6 +52,8 @@ class MainActivity : ComponentActivity() {
 
                 else -> {
                     // No location access granted.
+                    Log.d(TAG, "grant?="+TrackingUtility.hasLocationPermissions(context).toString())
+
                 }
             }
         }
@@ -58,6 +63,14 @@ class MainActivity : ComponentActivity() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             )
         )
+
+        if (TrackingUtility.hasLocationPermissions(context)) {
+
+            Log.d(TAG, "granted....." )
+
+        } else {
+            Log.d(TAG, "NOT granted....." )
+        }
 
         enableEdgeToEdge()
         setContent {
