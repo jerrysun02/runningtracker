@@ -1,17 +1,21 @@
 package com.myprojects.modules.runningtracker.ui
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,12 +24,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.google.android.gms.maps.model.LatLng
 import com.myprojects.modules.runningtracker.Constants.TAG
 import com.myprojects.modules.runningtracker.TrackingUtility
 import com.myprojects.modules.runningtracker.ui.theme.RunningTrackerTheme
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
-import com.vmadalin.easypermissions.EasyPermissions
+import com.myprojects.modules.runningtracker.ui.viewmodel.PermissionViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -36,48 +39,46 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val locationPermissionRequest = registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
-            when {
-                permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
-                    // Precise location access granted.
-                    //    startOrResumeTrackingService()
-                    //viewmodel.startRun()
-                }
+        /*       val locationPermissionRequest = registerForActivityResult(
+                   ActivityResultContracts.RequestMultiplePermissions()
+               ) { permissions ->
+                   when {
+                       permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
+                           // Precise location access granted.
+                           //    startOrResumeTrackingService()
+                           //viewmodel.startRun()
+                       }
 
-                permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
-                    // Only approximate location access granted.
-                }
+                       permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
+                           // Only approximate location access granted.
+                       }
 
-                else -> {
-                    // No location access granted.
-                    Log.d(TAG, "grant?="+TrackingUtility.hasLocationPermissions(context).toString())
+                       else -> {
+                           // No location access granted.
+                           Log.d(TAG, "grant?="+TrackingUtility.hasLocationPermissions(context).toString())
 
-                }
-            }
-        }
-        locationPermissionRequest.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
+                       }
+                   }
+               }
+               locationPermissionRequest.launch(
+                   arrayOf(
+                       Manifest.permission.ACCESS_FINE_LOCATION,
+                       Manifest.permission.ACCESS_COARSE_LOCATION
+                   )
+               )
 
         if (TrackingUtility.hasLocationPermissions(context)) {
-
-            Log.d(TAG, "granted....." )
-
+            Log.d(TAG, "granted.....")
         } else {
-            Log.d(TAG, "NOT granted....." )
-        }
+            Log.d(TAG, "NOT granted.....")
+        }*/
 
         enableEdgeToEdge()
         setContent {
             RunningTrackerTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                ) {
+                    ) {
                     Column(
                         modifier = Modifier.padding(it)
                     ) {
@@ -94,7 +95,10 @@ fun Navigation() {
     val navController = rememberNavController()
     val viewmodel: MainViewmodel = viewModel()
 
-    NavHost(navController = navController, startDestination = Routes.Login.route) {
+    NavHost(navController = navController, startDestination = Routes.Home.route) {
+        composable(Routes.Home.route) {
+            HomeComposable(navController = navController, viewmodel)
+        }
         composable(Routes.Login.route) {
             RunsComposable(navController = navController, viewmodel)
         }
@@ -111,17 +115,15 @@ fun Navigation() {
                 }
             )
         ) { it ->
-       //     Log.d("------------", "host args=${it.arguments.toString()}")
             it.arguments?.getString("id")?.let {
-       //         Log.d("------------", "host it=$it")
                 RouteComposable(navController = navController, viewmodel, it.toInt())
             }
         }
     }
 }
 
-
 sealed class Routes(val route: String) {
+    data object Home : Routes("Home")
     data object Login : Routes("Login")
     data object Tracking : Routes("Tracking")
     data object Route : Routes("Route")
