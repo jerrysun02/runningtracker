@@ -1,9 +1,5 @@
 package com.myprojects.modules.runningtracker.ui
 
-import android.util.Log
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,26 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.google.android.gms.maps.model.LatLng
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
-import com.myprojects.modules.runningtracker.ui.viewmodel.PermissionViewModel
-import com.vmadalin.easypermissions.EasyPermissions
 
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
     val runsFlow by viewmodel.runsFlow.collectAsState()
-
-//    fun showRoute(route: List<List<LatLng>>) {
-//        navController.navigate(route = Routes.Route.route)
-//    }
-
     LaunchedEffect(Unit) {
-    //    locationPermissionResultLauncher.launch(
-    //        Manifest.permission.ACCESS_FINE_LOCATION
-    //    )
         viewmodel.getRunsFlow()
     }
 
@@ -66,9 +50,6 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
         Column {
             Button(
                 onClick = {
-
-
-
                     viewmodel.startRun()
                     navController.navigate(route = Routes.Tracking.route)
                 }
@@ -87,11 +68,8 @@ fun RunCard(navController: NavController, run: Run) {
             .padding(4.dp)
             .clip(RoundedCornerShape(1.dp)),
         onClick = {
-  //          Log.d("------------", "card clicked...${run.id}")
-            //showRoute(run.locationList)
             navController.navigate(route = Routes.Route.withArgs(run.id.toString()))
         }
-
     ) {
         Text(
             modifier = Modifier.padding(6.dp),

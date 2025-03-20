@@ -8,9 +8,6 @@ import com.google.android.gms.maps.model.LatLng
 
 @Entity(tableName = "running_table")
 data class Run(
- //   @PrimaryKey(autoGenerate = true)
- //   @ColumnInfo(name = "id")
- //   var id: Int ?= null,
     @ColumnInfo(name = "start")
     var start: String = "",
     @ColumnInfo(name = "end")
@@ -31,6 +28,5 @@ data class Run(
     var locationList: List<List<LatLng>>
 ) {
     @PrimaryKey(autoGenerate = true)
-   // @ColumnInfo(name = "id")
     var id: Int = 0
 }

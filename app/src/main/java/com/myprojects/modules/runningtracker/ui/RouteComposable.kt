@@ -1,6 +1,5 @@
 package com.myprojects.modules.runningtracker.ui
 
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,9 +41,6 @@ fun RouteComposable(navController: NavController, viewmodel: MainViewmodel, id: 
                         cameraPositionState.position =
                             CameraPosition.fromLatLngZoom(location, 11f)
                     }
-                    //cameraPositionState.position =
-            //        Log.d("------------", "route compose location=$location")
-            //        Log.d("------------", "route compose polyline=$polyLine")
                 }
             }
         }

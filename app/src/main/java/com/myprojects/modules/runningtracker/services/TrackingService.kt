@@ -111,8 +111,6 @@ class TrackingService : Service() {
     }
 
     private fun updateLocationTracking(isTracking: Int) {
-        Log.d(TAG, "service updateLocTracking isTracking=$isTracking")
-    //    Log.d(TAG, "permission = " + TrackingUtility.hasLocationPermissions(this))
         if (isTracking != 0) {
             if (TrackingUtility.hasLocationPermissions(this)) {
                 val request = LocationRequest.Builder(

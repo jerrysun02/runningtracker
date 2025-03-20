@@ -107,7 +107,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
         )
         viewmodel.insertRun(run)
 
-        navController.navigate(route = Routes.Login.route)
+        navController.navigate(route = Routes.Runs.route)
 
         Intent(context, TrackingService::class.java).also {
             it.action = ACTION_STOP_SERVICE
