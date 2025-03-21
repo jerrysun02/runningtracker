@@ -2,7 +2,6 @@ package com.myprojects.modules.runningtracker.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,11 +56,10 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-       // viewmodel.startRun()
+        // viewmodel.startRun()
     }
 
     fun pauseTracking() {
-        Log.d("------------", "compose pause")
         Intent(context, TrackingService::class.java).also {
             it.action = ACTION_PAUSE_SERVICE
             context.startService(it)
@@ -69,7 +67,6 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     }
 
     fun resumeTracking() {
-        Log.d("------------", "compose resume")
         viewmodel.resumeRun()
         Intent(context, TrackingService::class.java).also {
             it.action = ACTION_START_OR_RESUME_SERVICE
@@ -79,19 +76,14 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
 
     @SuppressLint("SimpleDateFormat")
     fun stopTrackingService() {
-        var routines = viewmodel.polyLines
-
         val loc = mutableListOf<MutableList<LatLng>>()
-
         viewmodel.polyLines.forEach {
             val locations = Collections.unmodifiableList(it)
-            Log.d("--------------", "stop...loc=$locations")
-            if (locations.size > 0) {
+            if (locations.isNotEmpty()) {
                 loc.add(locations)
             }
         }
 
-        Log.d("------------", "compose stop...$loc")
         val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
         end = sdf.format(Date())
         val run = Run(
@@ -106,9 +98,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
             loc
         )
         viewmodel.insertRun(run)
-
         navController.navigate(route = Routes.Runs.route)
-
         Intent(context, TrackingService::class.java).also {
             it.action = ACTION_STOP_SERVICE
             context.startService(it)
@@ -134,7 +124,6 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
         }
 
         if (viewmodel.polyLines.isNotEmpty()) {
-            //Log.d("------------", "compose lines=$(viewmodel.polyLines)")
             Marker(
                 state = MarkerState(position = cameraPositionState.position.target),
                 title = ""
@@ -143,7 +132,6 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                 Polyline(
                     points = polyLine.toList(), color = Color.Red, width = 12f
                 )
-                //Log.d("------------", "compose**line=$polyLine")
             }
         }
     }

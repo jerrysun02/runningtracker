@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -38,7 +37,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
-import com.myprojects.modules.runningtracker.Constants.TAG
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 import kotlinx.coroutines.launch
 
@@ -108,7 +106,7 @@ fun LoginComposable(navController: NavController, viewModel: MainViewmodel) {
 
     Scaffold(snackbarHost = {
         SnackbarHost(hostState = snackbarHostState)
-    }) { contentPadding ->
+    }) { _ ->
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
