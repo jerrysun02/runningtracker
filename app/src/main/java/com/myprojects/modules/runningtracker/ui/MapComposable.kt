@@ -26,7 +26,6 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.myprojects.modules.runningtracker.services.TrackingService.Companion.timeStarted
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 import kotlinx.coroutines.launch
 
@@ -80,7 +79,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                     points = polyLine.toList(), color = Color.Red, width = 12f
                 )
             }
-            if (System.currentTimeMillis() - timeStarted > 1000 * 60 * 60 * 8) {
+            if (System.currentTimeMillis() - viewmodel.timeStarted > 1000 * 60 * 60 * 8) {
                 stopTracking()
             }
         }

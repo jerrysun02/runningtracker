@@ -17,7 +17,7 @@ class MainRepository @Inject constructor(
     private val runDAO: RunDAO,
     private val locationDAO: LocationDAO
 ) {
-    suspend fun addNewRun(run: Run): Long = runDAO.insertRun(run)
+    suspend fun insertRun(run: Run): Long = runDAO.insertRun(run)
 
     suspend fun updateRun(run: Run) = runDAO.updateRun(run)
 

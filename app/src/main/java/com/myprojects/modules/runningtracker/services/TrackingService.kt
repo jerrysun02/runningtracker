@@ -37,22 +37,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class TrackingService : Service() {
     private var isFirstRun = true
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-    val formatter = DateTimeFormatter.ofPattern("dd/M/yyyy HH:mm:ss")
     var preLocation = LatLng(0.0, 0.0)
     var preTime = 0L
 
     companion object {
         val isTracking = MutableStateFlow(1)
         val locationFlow = MutableStateFlow<LatLng?>(null)
-        var timeStarted = 0L
-        var start = ""
-        var end = ""
     }
 
     override fun onCreate() {
@@ -72,8 +66,6 @@ class TrackingService : Service() {
                     if (isFirstRun) {
                         startForegroundService()
                         isFirstRun = false
-                        timeStarted = System.currentTimeMillis()
-                        start = LocalDateTime.now().format(formatter)
                     } else {
                         isTracking.value = 1
                     }
@@ -84,7 +76,6 @@ class TrackingService : Service() {
                 }
 
                 ACTION_STOP_SERVICE -> {
-                    end = LocalDateTime.now().format(formatter)
                     killService()
                 }
 
