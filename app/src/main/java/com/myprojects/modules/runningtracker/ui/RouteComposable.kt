@@ -3,20 +3,24 @@ package com.myprojects.modules.runningtracker.ui
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.CameraUpdateFactory.newLatLngBounds
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
-import com.google.maps.android.compose.rememberCameraPositionState
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 
 @Composable
 fun RouteComposable(navController: NavController, viewmodel: MainViewmodel, id: Int) {
-    val cameraPositionState = rememberCameraPositionState()
+    val cameraPositionState = CameraPositionState()
+    val polyLines by viewmodel.polyLinesFlow.collectAsStateWithLifecycle()
+    val points = mutableListOf<LatLng>()
 
     LaunchedEffect(Unit) {
         viewmodel.getRoute(id)
@@ -26,23 +30,21 @@ fun RouteComposable(navController: NavController, viewmodel: MainViewmodel, id: 
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState
     ) {
-        if (viewmodel.polyLines.isNotEmpty()) {
-            Marker(
-                state = MarkerState(position = cameraPositionState.position.target),
-                title = ""
-            )
-            for (polyLine in viewmodel.polyLines) {
-                if (polyLine.size > 0) {
+        if (polyLines.isNotEmpty()) {
+            for (polyLine in polyLines) {
+                if (polyLine.isNotEmpty()) {
                     Polyline(
                         points = polyLine.toList(), color = Color.Red, width = 12f
                     )
-                    val location = polyLine[0]
-                    location.let {
-                        cameraPositionState.position =
-                            CameraPosition.fromLatLngZoom(location, 11f)
-                    }
+                    points += polyLine.toList()
                 }
             }
+            val boundsBuilder = LatLngBounds.Builder()
+            points.forEach { boundsBuilder.include(it) }
+            val bounds = boundsBuilder.build()
+            cameraPositionState.move(
+                newLatLngBounds(bounds, 100)
+            )
         }
     }
 }

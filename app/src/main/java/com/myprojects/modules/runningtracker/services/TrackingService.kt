@@ -6,10 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.location.Location
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
@@ -37,12 +37,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class TrackingService : Service() {
     private var isFirstRun = true
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    val formatter = DateTimeFormatter.ofPattern("dd/M/yyyy HH:mm:ss")
+    var preLocation = LatLng(0.0, 0.0)
+    var preTime = 0L
 
     companion object {
         val isTracking = MutableStateFlow(1)
@@ -62,7 +65,6 @@ class TrackingService : Service() {
         }
     }
 
-    @SuppressLint("SimpleDateFormat")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
             when (it.action) {
@@ -70,14 +72,10 @@ class TrackingService : Service() {
                     if (isFirstRun) {
                         startForegroundService()
                         isFirstRun = false
-                        Log.d(TAG, "service: start isTracking = 1 first")
+                        timeStarted = System.currentTimeMillis()
+                        start = LocalDateTime.now().format(formatter)
                     } else {
                         isTracking.value = 1
-                        timeStarted = System.currentTimeMillis()
-
-                        val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
-                        start = sdf.format(Date())
-                        Log.d(TAG, "service: start isTracking = 1")
                     }
                 }
 
@@ -86,6 +84,7 @@ class TrackingService : Service() {
                 }
 
                 ACTION_STOP_SERVICE -> {
+                    end = LocalDateTime.now().format(formatter)
                     killService()
                 }
 
@@ -93,11 +92,11 @@ class TrackingService : Service() {
                 }
             }
         }
-        return super.onStartCommand(intent, flags, startId)
+        return START_STICKY
     }
 
     override fun onBind(p0: Intent?): IBinder? {
-        TODO("Not yet implemented")
+        return null
     }
 
     private fun pauseService() {
@@ -131,7 +130,6 @@ class TrackingService : Service() {
                 ) {
                     return
                 }
-                Log.d(TAG, "update location")
                 fusedLocationProviderClient.requestLocationUpdates(
                     request,
                     locationCallback,
@@ -145,11 +143,24 @@ class TrackingService : Service() {
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(p0: LocationResult) {
+            if (p0 == null) {
+                return
+            }
             super.onLocationResult(p0)
             p0.locations.let { locations ->
                 for (location in locations) {
                     Log.d(TAG, "callback------")
-                    locationFlow.tryEmit(LatLng(location.latitude, location.longitude))
+                    val results = FloatArray(1)
+                    Location.distanceBetween(
+                        preLocation.latitude, preLocation.longitude,
+                        location.latitude, location.longitude,
+                        results
+                    )
+                    if (results[0] > 3 && System.currentTimeMillis() - preTime > 1000 * 3) {
+                        preLocation = LatLng(location.latitude, location.longitude)
+                        preTime = System.currentTimeMillis()
+                        locationFlow.tryEmit(LatLng(location.latitude, location.longitude))
+                    }
                 }
             }
         }
@@ -160,7 +171,7 @@ class TrackingService : Service() {
         isTracking.value = 1
 
         val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel(notificationManager)
 
         val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)

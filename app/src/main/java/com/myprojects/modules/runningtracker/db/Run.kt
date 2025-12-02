@@ -6,8 +6,10 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.android.gms.maps.model.LatLng
 
-@Entity(tableName = "running_table")
+@Entity(tableName = "runs_table")
 data class Run(
+    @PrimaryKey(autoGenerate = true)
+    var id: Long = 0,
     @ColumnInfo(name = "start")
     var start: String = "",
     @ColumnInfo(name = "end")
@@ -25,8 +27,5 @@ data class Run(
     @ColumnInfo(name = "caloriesBurned")
     var caloriesBurned: Int = 0,
     @ColumnInfo(name = "locationList")
-    var locationList: List<List<LatLng>>
-) {
-    @PrimaryKey(autoGenerate = true)
-    var id: Int = 0
-}
+    var locationList: List<List<LatLng>> = emptyList()
+)

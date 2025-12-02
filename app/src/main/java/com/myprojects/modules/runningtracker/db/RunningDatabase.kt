@@ -5,12 +5,13 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [Run::class],
-    version = 5,
+    entities = [Run::class, Location::class],
+    version = 7,
     exportSchema = false
 )
 
-@TypeConverters(BitmapConverters::class, RouteConverters::class)
+@TypeConverters(BitmapConverters::class, LocationConverters::class)
 abstract class RunningDatabase : RoomDatabase() {
     abstract fun getRunDao(): RunDAO
+    abstract fun getLocationDao(): LocationDAO
 }

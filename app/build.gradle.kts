@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.myprojects.modules.runningtracker"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.myprojects.modules.runningtracker"
         minSdk = 28
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 

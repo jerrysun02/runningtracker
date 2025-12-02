@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,10 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import kotlinx.coroutines.launch
 
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
+    val coroutineScope = rememberCoroutineScope()
     val runsFlow by viewmodel.runsFlow.collectAsState()
+
     LaunchedEffect(Unit) {
         viewmodel.getRunsFlow()
     }
@@ -40,17 +45,17 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
             ),
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
-            runsFlow.forEach {
-                item {
-                    RunCard(navController, it)
-                }
+            items(runsFlow) { run ->
+                RunCard(navController, run)
             }
         }
 
         Column {
             Button(
                 onClick = {
-                    viewmodel.startRun()
+                    coroutineScope.launch {
+                        viewmodel.startRun()
+                    }
                     navController.navigate(route = Routes.Tracking.route)
                 }
             ) {
@@ -65,7 +70,7 @@ fun RunCard(navController: NavController, run: Run) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp)
+            .padding(2.dp)
             .clip(RoundedCornerShape(1.dp)),
         onClick = {
             navController.navigate(route = Routes.Route.withArgs(run.id.toString()))
@@ -79,10 +84,9 @@ fun RunCard(navController: NavController, run: Run) {
                 append(run.start)
                 append(" - ")
                 append(run.end)
+                append(" size = ")
+                append(run.locationList.size)
             }
-        )
-        Text(
-            text = run.locationList.toString()
         )
     }
 }

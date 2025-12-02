@@ -1,7 +1,5 @@
 package com.myprojects.modules.runningtracker.ui
 
-import android.annotation.SuppressLint
-import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,94 +17,45 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.myprojects.modules.runningtracker.Constants.ACTION_PAUSE_SERVICE
-import com.myprojects.modules.runningtracker.Constants.ACTION_START_OR_RESUME_SERVICE
-import com.myprojects.modules.runningtracker.Constants.ACTION_STOP_SERVICE
-import com.myprojects.modules.runningtracker.db.Run
-import com.myprojects.modules.runningtracker.services.TrackingService
-import com.myprojects.modules.runningtracker.services.TrackingService.Companion.end
-import com.myprojects.modules.runningtracker.services.TrackingService.Companion.start
 import com.myprojects.modules.runningtracker.services.TrackingService.Companion.timeStarted
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Collections
-import java.util.Date
 
 @Composable
 fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val coroutineScope = rememberCoroutineScope()
     val cameraPositionState = rememberCameraPositionState()
-    val location by viewmodel.locationFlow.collectAsState()
     val trackingState by viewmodel.trackingState.collectAsState()
     var textLeft by remember { mutableStateOf("Pause") }
     val textRight by remember { mutableStateOf("Stop") }
     val button1Enabled by remember { mutableStateOf(true) }
     var button2Enabled by remember { mutableStateOf(true) }
-    val context = LocalContext.current
+    val polyLines by viewmodel.polyLinesFlow.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        // viewmodel.startRun()
+        viewmodel.getLocationFlow()
     }
 
     fun pauseTracking() {
-        Intent(context, TrackingService::class.java).also {
-            it.action = ACTION_PAUSE_SERVICE
-            context.startService(it)
-        }
+        viewmodel.pauseRun()
     }
 
     fun resumeTracking() {
         viewmodel.resumeRun()
-        Intent(context, TrackingService::class.java).also {
-            it.action = ACTION_START_OR_RESUME_SERVICE
-            context.startService(it)
-        }
     }
 
-    @SuppressLint("SimpleDateFormat")
-    fun stopTrackingService() {
-        val loc = mutableListOf<MutableList<LatLng>>()
-        viewmodel.polyLines.forEach {
-            val locations = Collections.unmodifiableList(it)
-            if (locations.isNotEmpty()) {
-                loc.add(locations)
-            }
-        }
-
-        val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
-        end = sdf.format(Date())
-        val run = Run(
-            start,
-            end,
-            null,
-            timeStarted,
-            0f,
-            0,
-            0,
-            0,
-            loc
-        )
-        viewmodel.insertRun(run)
+    fun stopTracking() {
+        viewmodel.updateRun()
         navController.navigate(route = Routes.Runs.route)
-        Intent(context, TrackingService::class.java).also {
-            it.action = ACTION_STOP_SERVICE
-            context.startService(it)
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        viewmodel.getLocationFlow()
     }
 
     GoogleMap(
@@ -114,24 +63,25 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
         cameraPositionState = cameraPositionState
     ) {
         Marker(
-            state = MarkerState(position = cameraPositionState.position.target),
-            title = ""
+            state = MarkerState(position = cameraPositionState.position.target)
         )
 
-        location?.let {
-            cameraPositionState.position =
-                CameraPosition.fromLatLngZoom(location!!, 15f)
-        }
-
-        if (viewmodel.polyLines.isNotEmpty()) {
+        if (polyLines.isNotEmpty()) {
+            if (polyLines.last().isNotEmpty()) {
+                cameraPositionState.position =
+                    CameraPosition.fromLatLngZoom(polyLines.last().last(), 17f)
+            }
             Marker(
                 state = MarkerState(position = cameraPositionState.position.target),
                 title = ""
             )
-            for (polyLine in viewmodel.polyLines) {
+            for (polyLine in polyLines) {
                 Polyline(
                     points = polyLine.toList(), color = Color.Red, width = 12f
                 )
+            }
+            if (System.currentTimeMillis() - timeStarted > 1000 * 60 * 60 * 8) {
+                stopTracking()
             }
         }
     }
@@ -161,7 +111,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
         Button(
             onClick = {
                 coroutineScope.launch {
-                    stopTrackingService()
+                    stopTracking()
                 }
                 textLeft = "Start"
                 button2Enabled = false

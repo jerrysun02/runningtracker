@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.room.Room
 import com.myprojects.modules.runningtracker.Constants.RUNNING_DATABASE_NAME
+import com.myprojects.modules.runningtracker.db.LocationDAO
 import com.myprojects.modules.runningtracker.db.RunDAO
 import com.myprojects.modules.runningtracker.db.RunningDatabase
 import dagger.Module
@@ -27,6 +28,12 @@ object AppModule {
     @Provides
     fun providesRunDao(db: RunningDatabase): RunDAO {
         return db.getRunDao()
+    }
+
+    @Singleton
+    @Provides
+    fun providesLocationDao(db: RunningDatabase): LocationDAO {
+        return db.getLocationDao()
     }
 
     @Singleton
