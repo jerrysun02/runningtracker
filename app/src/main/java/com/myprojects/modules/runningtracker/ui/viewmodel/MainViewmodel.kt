@@ -105,7 +105,7 @@ class MainViewmodel @Inject constructor(
     }
 
     fun updateRun() = viewModelScope.launch {
-        end = LocalDateTime.now().format(formatter)
+        end = ((System.currentTimeMillis() - timeStarted) / 1000).toString()
         mainRepository.insertRun(createRun())
         mainRepository.stopLocationService()
         _polyLinesFlow.value = emptyList()

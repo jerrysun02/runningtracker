@@ -23,11 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
-import kotlinx.coroutines.launch
 
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
-    val coroutineScope = rememberCoroutineScope()
     val runsFlow by viewmodel.runsFlow.collectAsState()
 
     LaunchedEffect(Unit) {
