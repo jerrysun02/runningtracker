@@ -94,7 +94,7 @@ class MainViewmodel @Inject constructor(
         mainRepository.pauseLocationService()
     }
 
-    suspend fun startRun() {
+    fun startRun() {
         start = LocalDateTime.now().format(formatter)
         timeStarted = System.currentTimeMillis()
         mainRepository.startLocationService()

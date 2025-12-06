@@ -46,16 +46,15 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             items(runsFlow) { run ->
-                RunCard(navController, run)
+                if (run.locationList.flatten().size > 100 || System.currentTimeMillis() - run.timestamp < 1000 * 60 * 60)
+                    RunCard(navController, run)
             }
         }
 
         Column {
             Button(
                 onClick = {
-                    coroutineScope.launch {
-                        viewmodel.startRun()
-                    }
+                    viewmodel.startRun()
                     navController.navigate(route = Routes.Tracking.route)
                 }
             ) {
@@ -85,7 +84,7 @@ fun RunCard(navController: NavController, run: Run) {
                 append(" - ")
                 append(run.end)
                 append(" size = ")
-                append(run.locationList.size)
+                append(run.locationList.flatten().size)
             }
         )
     }
