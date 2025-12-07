@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import timber.log.Timber
 
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
@@ -44,7 +44,7 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             items(runsFlow) { run ->
-                if (run.locationList.flatten().size > 100 || System.currentTimeMillis() - run.timestamp < 1000 * 60 * 60)
+            //    if (run.locationList.flatten().size > 100 || System.currentTimeMillis() - run.timestamp < 1000 * 60 * 60)
                     RunCard(navController, run)
             }
         }
@@ -52,6 +52,7 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
         Column {
             Button(
                 onClick = {
+                    Timber.d("startRun")
                     viewmodel.startRun()
                     navController.navigate(route = Routes.Tracking.route)
                 }
