@@ -164,6 +164,8 @@ class MainViewmodel @Inject constructor(
     )
 
     fun deleteRun(run: Run) = viewModelScope.launch {
+        Timber.d("deleteRun: $run")
         mainRepository.deleteRun(run)
+        getRunsFlow() // Refresh the list after deletion
     }
 }
