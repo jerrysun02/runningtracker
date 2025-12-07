@@ -17,7 +17,10 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
+import com.myprojects.modules.runningtracker.util.calculateDistance
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
 class MainViewmodel @Inject constructor(
@@ -39,10 +42,13 @@ class MainViewmodel @Inject constructor(
     private val _timeInMillis = MutableStateFlow(0L)
     val timeInMillis: StateFlow<Long> = _timeInMillis.asStateFlow()
 
-    //val distanceInMeters: StateFlow<Float> = polyLinesFlow.map { polylines ->
-    //   calculateDistance(polylines)
-    //}//.asStateFlow()
-
+    val distanceInMeters: StateFlow<Float> = polyLinesFlow.map { polylines ->
+        calculateDistance(polylines)
+    }.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        initialValue = 0f
+    )
     var start = ""
     var end = ""
     var timeStarted = 0L
@@ -151,7 +157,7 @@ class MainViewmodel @Inject constructor(
         img = null,
         timestamp = timeStarted,
         avgSpeedInKMH = 0f,
-        distanceInMeters = 0,//distanceInMeters.value.toInt(),
+        distanceInMeters = distanceInMeters.value.toInt(),
         timeInMillis = _timeInMillis.value,
         caloriesBurned = 0,
         locationList = _polyLinesFlow.value

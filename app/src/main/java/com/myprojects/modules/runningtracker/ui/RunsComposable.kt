@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,6 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import kotlinx.coroutines.launch
+import com.myprojects.modules.runningtracker.util.calculateDistance
+import com.myprojects.modules.runningtracker.util.formatTime
+import java.text.SimpleDateFormat
+import java.util.Date
 import timber.log.Timber
 
 @Composable
@@ -74,17 +80,21 @@ fun RunCard(navController: NavController, run: Run) {
             navController.navigate(route = Routes.Route.withArgs(run.id.toString()))
         }
     ) {
-        Text(
-            modifier = Modifier.padding(6.dp),
-            text = buildString {
-                append(run.id)
-                append(". ")
-                append(run.start)
-                append(" - ")
-                append(run.end)
-                append(" size = ")
-                append(run.locationList.flatten().size)
-            }
-        )
+        Column {
+            Text(
+                modifier = Modifier.padding(6.dp),
+                text = buildString {
+                    append(run.id)
+                    append(". ")
+                    append(run.start)
+                    append(" - ")
+                    append(run.end)
+                    append(" size = ")
+                    append(run.locationList.flatten().size)
+                }
+            )
+            Text("Distance: %.2f km".format(calculateDistance(run.locationList) / 1000f))
+            Text("Duration: ${formatTime(run.timeInMillis)}")
+        }
     }
 }

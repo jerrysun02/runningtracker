@@ -45,6 +45,7 @@ typealias Polylines = MutableList<Polyline>
 
 @AndroidEntryPoint
 class TrackingService : LifecycleService() {
+
     @Inject
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
@@ -72,8 +73,7 @@ class TrackingService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         curNotificationBuilder = baseNotificationBuilder
-        wakeLock =
-            powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RunningTracker::WakeLock")
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RunningTracker::WakeLock")
         postInitialValues()
         lifecycleScope.launch {
             isTracking.collect { isTracking ->
@@ -95,12 +95,10 @@ class TrackingService : LifecycleService() {
                         startTracking()
                     }
                 }
-
                 ACTION_PAUSE_SERVICE -> {
                     Timber.d("Paused service")
                     pauseService()
                 }
-
                 ACTION_STOP_SERVICE -> {
                     Timber.d("Stopped service")
                     killService()
@@ -122,8 +120,7 @@ class TrackingService : LifecycleService() {
     private fun startForegroundService() {
         startTracking()
         currentRunStartTime = System.currentTimeMillis() - serviceRunningTime
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel(notificationManager)
         }
@@ -137,8 +134,7 @@ class TrackingService : LifecycleService() {
                 serviceRunningTime = System.currentTimeMillis() - currentRunStartTime
                 timeRunInMillis.value = serviceRunningTime
                 if (serviceRunningTime >= lastSecondTimestamp + 1000L) {
-                    val notificationManager =
-                        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     val formattedTime = String.format(
                         "%02d:%02d:%02d",
                         TimeUnit.MILLISECONDS.toHours(serviceRunningTime),
@@ -205,21 +201,16 @@ class TrackingService : LifecycleService() {
     private fun updateNotificationTrackingState(isTracking: Boolean) {
         val notificationActionText = if (isTracking) "Pause" else "Resume"
         val pendingIntent = if (isTracking) {
-            val pauseIntent =
-                Intent(this, TrackingService::class.java).apply { action = ACTION_PAUSE_SERVICE }
+            val pauseIntent = Intent(this, TrackingService::class.java).apply { action = ACTION_PAUSE_SERVICE }
             PendingIntent.getService(this, 1, pauseIntent, FLAG_IMMUTABLE)
         } else {
-            val resumeIntent = Intent(this, TrackingService::class.java).apply {
-                action = ACTION_START_OR_RESUME_SERVICE
-            }
+            val resumeIntent = Intent(this, TrackingService::class.java).apply { action = ACTION_START_OR_RESUME_SERVICE }
             PendingIntent.getService(this, 2, resumeIntent, FLAG_IMMUTABLE)
         }
 
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        curNotificationBuilder.javaClass.getDeclaredField("mActions").apply { isAccessible = true }
-            .set(curNotificationBuilder, ArrayList<NotificationCompat.Action>())
+        curNotificationBuilder.javaClass.getDeclaredField("mActions").apply { isAccessible = true }.set(curNotificationBuilder, ArrayList<NotificationCompat.Action>())
 
         curNotificationBuilder = baseNotificationBuilder
             .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
