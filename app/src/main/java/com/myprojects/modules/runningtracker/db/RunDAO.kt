@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RunDAO {
@@ -20,7 +21,7 @@ interface RunDAO {
     suspend fun updateRun(run: Run)
 
     @Query("SELECT * FROM runs_table ORDER BY id DESC")
-    fun getAllRunsSortedByDate(): List<Run>
+    fun getAllRunsSortedByDate(): Flow<List<Run>>
 
     @Query("SELECT * FROM runs_table WHERE id = :id LIMIT 1")
     fun getRoute(id: Int): List<Run>

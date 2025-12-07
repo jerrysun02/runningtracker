@@ -63,6 +63,12 @@ class MainViewmodel @Inject constructor(
                 state = it
             }
         }
+        // Collect runs directly from the repository as a Flow
+        viewModelScope.launch {
+            mainRepository.getAllRunsSortedByDate().collect { runs ->
+                _runsFlow.value = runs
+            }
+        }
     }
 
     fun getLocationFlow() {
@@ -89,14 +95,6 @@ class MainViewmodel @Inject constructor(
             TrackingService.timeRunInMillis.collect {
                 Timber.d("TimeRunInMillis: $it")
                 _timeInMillis.value = it
-            }
-        }
-    }
-
-    fun getRunsFlow() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                _runsFlow.value = mainRepository.getAllRunsSortedByDate()
             }
         }
     }
@@ -166,6 +164,5 @@ class MainViewmodel @Inject constructor(
     fun deleteRun(run: Run) = viewModelScope.launch {
         Timber.d("deleteRun: $run")
         mainRepository.deleteRun(run)
-        getRunsFlow() // Refresh the list after deletion
     }
 }
