@@ -3,6 +3,9 @@ package com.myprojects.modules.runningtracker.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
+import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_PAUSED
+import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_RUNNING
+import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_STOPPED
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.repository.MainRepository
 import com.myprojects.modules.runningtracker.services.TrackingService
@@ -21,6 +24,8 @@ import com.myprojects.modules.runningtracker.util.calculateDistance
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 
 @HiltViewModel
 class MainViewmodel @Inject constructor(
@@ -29,9 +34,9 @@ class MainViewmodel @Inject constructor(
     private val _polyLinesFlow = MutableStateFlow<List<List<LatLng>>>(emptyList())
     val polyLinesFlow = _polyLinesFlow
 
-    private val _trackingState = MutableStateFlow(0)
+    private val _trackingState = MutableStateFlow(TRACKING_STATE_PAUSED)
     val trackingState: StateFlow<Int> = _trackingState
-    var state = 0
+    var state = TRACKING_STATE_PAUSED
 
     private val _runsFlow = MutableStateFlow<List<Run>>(emptyList())
     val runsFlow: StateFlow<List<Run>> = _runsFlow
@@ -54,6 +59,9 @@ class MainViewmodel @Inject constructor(
     var timeStarted = 0L
     val formatter: DateTimeFormatter? = DateTimeFormatter.ofPattern("yyyy-M-mm HH:mm:ss")
 
+    private val _navigateToRunsScreen = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val navigateToRunsScreen: SharedFlow<Unit> = _navigateToRunsScreen
+
     init {
         // Initialize state based on TrackingService's current state
         viewModelScope.launch {
@@ -61,6 +69,9 @@ class MainViewmodel @Inject constructor(
                 Timber.d("isTracking: $it")
                 _trackingState.value = it
                 state = it
+                if (it == TRACKING_STATE_STOPPED) { // State 2 means run stopped due to duration or explicit stop
+                    updateRun() // Save the run data
+                }
             }
         }
         // Collect runs directly from the repository as a Flow
@@ -76,7 +87,7 @@ class MainViewmodel @Inject constructor(
             TrackingService.locationFlow.collect {
                 if (it != null) {
                     Timber.d("LocationFlow: $it")
-                    if (state == 1) {
+                    if (state == TRACKING_STATE_RUNNING) {
                         val currentPolyLines = _polyLinesFlow.value.toMutableList()
                         if (currentPolyLines.isEmpty() || currentPolyLines.last().isEmpty()) {
                             currentPolyLines.add(mutableListOf(it))
@@ -113,7 +124,7 @@ class MainViewmodel @Inject constructor(
                         }
                     }
                 }
-                _trackingState.value = 2
+                _trackingState.value = TRACKING_STATE_STOPPED
             }
         }
     }
@@ -145,8 +156,9 @@ class MainViewmodel @Inject constructor(
         mainRepository.insertRun(createRun())
         mainRepository.stopLocationService()
         _polyLinesFlow.value = emptyList()
-        _trackingState.value = 0
+        _trackingState.value = TRACKING_STATE_PAUSED
         _timeInMillis.value = 0L
+        _navigateToRunsScreen.emit(Unit) // Emit event to navigate
     }
 
     fun createRun(): Run = Run(

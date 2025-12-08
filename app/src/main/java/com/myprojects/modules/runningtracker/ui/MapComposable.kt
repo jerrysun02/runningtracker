@@ -51,6 +51,11 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
 
     LaunchedEffect(Unit) {
         viewmodel.getLocationFlow()
+        viewmodel.navigateToRunsScreen.collect { // Observe for navigation events
+            navController.navigate(route = Routes.Runs.route) {
+                popUpTo(Routes.Tracking.route) { inclusive = true }
+            }
+        }
     }
 
     DisposableEffect(Unit) {
@@ -67,8 +72,8 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     }
 
     fun stopTracking() {
-        viewmodel.updateRun()
-        navController.navigate(route = Routes.Runs.route)
+        viewmodel.updateRun() // This will now trigger the navigation via SharedFlow
+        // navController.navigate(route = Routes.Runs.route) // Remove direct navigation
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
