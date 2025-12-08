@@ -31,6 +31,7 @@ import com.myprojects.modules.runningtracker.util.formatTime
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 @Composable
 fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
@@ -86,7 +87,7 @@ fun RunCard(navController: NavController, viewmodel: MainViewmodel, run: Run) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Date: ${SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(run.timestamp))}")
+                Text("Date: ${SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date(run.timestamp))}")
                 Text("Distance: %.2f km".format(calculateDistance(run.locationList) / 1000f))
                 Text("Duration: ${formatTime(run.timeInMillis)}")
             }

@@ -44,9 +44,9 @@ import kotlinx.coroutines.launch
 fun LoginComposable(navController: NavController, viewModel: MainViewmodel) {
     val context = LocalContext.current
     val activity = context as Activity
-    var locationPermissionsGranted =
+    val locationPermissionsGranted =
         remember { mutableStateOf(areLocationPermissionsAlreadyGranted(context)) }
-    var shouldShowPermissionRationale = remember {
+    val shouldShowPermissionRationale = remember {
         mutableStateOf(
             shouldShowRequestPermissionRationale(
                 activity,
@@ -55,7 +55,7 @@ fun LoginComposable(navController: NavController, viewModel: MainViewmodel) {
         )
     }
 
-    var shouldDirectUserToApplicationSettings = remember {
+    val shouldDirectUserToApplicationSettings = remember {
         mutableStateOf(false)
     }
 
@@ -106,9 +106,9 @@ fun LoginComposable(navController: NavController, viewModel: MainViewmodel) {
 
     Scaffold(snackbarHost = {
         SnackbarHost(hostState = snackbarHostState)
-    }) { _ ->
+    }) { paddingValues ->
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

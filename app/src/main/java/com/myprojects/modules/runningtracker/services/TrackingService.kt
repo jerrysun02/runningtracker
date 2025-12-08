@@ -38,8 +38,7 @@ import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import android.location.Location
-import android.os.Build
-import android.content.Context
+import java.util.Locale
 import com.myprojects.modules.runningtracker.Constants.MIN_ACCURACY_THRESHOLD
 import com.myprojects.modules.runningtracker.Constants.MIN_DISTANCE_CHANGE_THRESHOLD
 import com.myprojects.modules.runningtracker.Constants.MIN_TIME_BETWEEN_UPDATES_THRESHOLD
@@ -137,10 +136,8 @@ class TrackingService : LifecycleService() {
         startTracking()
         currentRunStartTime = System.currentTimeMillis() - serviceRunningTime
         val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createNotificationChannel(notificationManager)
-        }
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        createNotificationChannel(notificationManager)
         startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
         startTimer()
     }
@@ -159,8 +156,9 @@ class TrackingService : LifecycleService() {
 
                 if (serviceRunningTime >= lastSecondTimestamp + 1000L) {
                     val notificationManager =
-                        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     val formattedTime = String.format(
+                        Locale.getDefault(),
                         "%02d:%02d:%02d",
                         TimeUnit.MILLISECONDS.toHours(serviceRunningTime),
                         TimeUnit.MILLISECONDS.toMinutes(serviceRunningTime) % 60,
@@ -254,7 +252,7 @@ class TrackingService : LifecycleService() {
         }
 
         val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         curNotificationBuilder.javaClass.getDeclaredField("mActions").apply { isAccessible = true }
             .set(curNotificationBuilder, ArrayList<NotificationCompat.Action>())
@@ -276,7 +274,6 @@ class TrackingService : LifecycleService() {
     private fun killService() {
         isTracking.value = TRACKING_STATE_PAUSED // Reset to paused/initial state
         postInitialValues()
-        stopForeground(true)
         stopSelf()
         if (wakeLock.isHeld) wakeLock.release()
     }

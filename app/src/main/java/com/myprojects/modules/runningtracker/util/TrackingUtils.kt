@@ -1,6 +1,7 @@
 package com.myprojects.modules.runningtracker.util
 
 import com.google.android.gms.maps.model.LatLng
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -14,7 +15,7 @@ fun formatTime(milliseconds: Long): String {
     val seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
             TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds))
 
-    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    return String.format(Locale.getDefault(),"%02d:%02d:%02d", hours, minutes, seconds)
 }
 
 fun calculateDistance(locations: List<List<LatLng>>): Float {
