@@ -37,6 +37,12 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import android.location.Location
+import android.os.Build
+import android.content.Context
+import com.myprojects.modules.runningtracker.Constants.MIN_ACCURACY_THRESHOLD
+import com.myprojects.modules.runningtracker.Constants.MIN_DISTANCE_CHANGE_THRESHOLD
+import com.myprojects.modules.runningtracker.Constants.MIN_TIME_BETWEEN_UPDATES_THRESHOLD
 
 typealias Polyline = MutableList<LatLng>
 typealias Polylines = MutableList<Polyline>
@@ -61,6 +67,9 @@ class TrackingService : LifecycleService() {
     private var serviceRunningTime = 0L
     private var lastSecondTimestamp = 0L
     private var currentRunStartTime = 0L
+
+    private var previousLocation: Location? = null
+    private var previousUpdateTime: Long = 0L
 
     companion object {
         val isTracking = MutableStateFlow(0) // 0: Paused, 1: Running, 2: Stopped/Initial
@@ -116,12 +125,15 @@ class TrackingService : LifecycleService() {
         serviceRunningTime = 0L
         lastSecondTimestamp = 0L
         currentRunStartTime = 0L
+        previousLocation = null
+        previousUpdateTime = 0L
     }
 
     private fun startForegroundService() {
         startTracking()
         currentRunStartTime = System.currentTimeMillis() - serviceRunningTime
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel(notificationManager)
         startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
         startTimer()
@@ -134,7 +146,7 @@ class TrackingService : LifecycleService() {
                 timeRunInMillis.value = serviceRunningTime
                 if (serviceRunningTime >= lastSecondTimestamp + 1000L) {
                     val notificationManager =
-                        getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     val formattedTime = String.format(
                         "%02d:%02d:%02d",
                         TimeUnit.MILLISECONDS.toHours(serviceRunningTime),
@@ -178,8 +190,21 @@ class TrackingService : LifecycleService() {
             if (isTracking.value == 1) {
                 result.locations.let { locations ->
                     for (location in locations) {
-                        locationFlow.value = LatLng(location.latitude, location.longitude)
-                        Timber.d("NEW LOCATION: ${location.latitude}, ${location.longitude}")
+                        if (location.accuracy > MIN_ACCURACY_THRESHOLD) {
+                            Timber.d("Ignoring inaccurate location: ${location.accuracy}m")
+                            continue // Skip inaccurate locations
+                        }
+
+                        val currentTime = System.currentTimeMillis()
+                        if (previousLocation == null ||
+                            currentTime - previousUpdateTime >= MIN_TIME_BETWEEN_UPDATES_THRESHOLD ||
+                            previousLocation!!.distanceTo(location) >= MIN_DISTANCE_CHANGE_THRESHOLD
+                        ) {
+                            locationFlow.value = LatLng(location.latitude, location.longitude)
+                            Timber.d("NEW LOCATION: ${location.latitude}, ${location.longitude} Accuracy: ${location.accuracy}m")
+                            previousLocation = location
+                            previousUpdateTime = currentTime
+                        }
                     }
                 }
             }
@@ -211,7 +236,8 @@ class TrackingService : LifecycleService() {
             PendingIntent.getService(this, 2, resumeIntent, FLAG_IMMUTABLE)
         }
 
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         curNotificationBuilder.javaClass.getDeclaredField("mActions").apply { isAccessible = true }
             .set(curNotificationBuilder, ArrayList<NotificationCompat.Action>())

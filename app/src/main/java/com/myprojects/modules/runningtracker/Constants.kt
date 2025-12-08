@@ -12,9 +12,11 @@ object Constants {
     const val FASTEST_LOCATION_INTERVAL = 2000L
     const val TIMER_UPDATE_INTERVAL = 500L
 
+    const val MIN_ACCURACY_THRESHOLD = 25f // meters
+    const val MIN_DISTANCE_CHANGE_THRESHOLD = 3f // meters
+    const val MIN_TIME_BETWEEN_UPDATES_THRESHOLD = 2000L // milliseconds
+
     const val NOTIFICATION_CHANNEL_ID = "tracking_channel"
     const val NOTIFICATION_CHANNEL_NAME = "tracking"
     const val NOTIFICATION_ID = 1
-
-    const val TAG = "----------------"
 }
