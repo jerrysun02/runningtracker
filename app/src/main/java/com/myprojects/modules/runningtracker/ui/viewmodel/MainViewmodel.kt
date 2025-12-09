@@ -16,10 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 import com.myprojects.modules.runningtracker.util.calculateDistance
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -54,11 +51,8 @@ class MainViewmodel @Inject constructor(
         started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
         initialValue = 0f
     )
-    var start = ""
-    var end = ""
-    var timeStarted = 0L
-    val formatter: DateTimeFormatter? = DateTimeFormatter.ofPattern("yyyy-M-mm HH:mm:ss")
 
+    var runStartedAt: Long = 0L
     private val _navigateToRunsScreen = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val navigateToRunsScreen: SharedFlow<Unit> = _navigateToRunsScreen
 
@@ -141,8 +135,7 @@ class MainViewmodel @Inject constructor(
     }
 
     fun startRun() {
-        start = LocalDateTime.now().format(formatter)
-        timeStarted = System.currentTimeMillis()
+        runStartedAt = System.currentTimeMillis()
         _timeInMillis.value = 0L
         _polyLinesFlow.value = emptyList()
         val currentPolyLines = _polyLinesFlow.value.toMutableList()
@@ -152,7 +145,6 @@ class MainViewmodel @Inject constructor(
     }
 
     fun updateRun() = viewModelScope.launch {
-        end = (System.currentTimeMillis() - timeStarted).milliseconds.inWholeSeconds.toString()
         mainRepository.insertRun(createRun())
         mainRepository.stopLocationService()
         _polyLinesFlow.value = emptyList()
@@ -162,14 +154,12 @@ class MainViewmodel @Inject constructor(
     }
 
     fun createRun(): Run = Run(
-        start = start,
-        end = end,
+        startedAt = runStartedAt,
+        durationInMillis = _timeInMillis.value,
         img = null,
-        timestamp = timeStarted,
-        avgSpeedInKMH = 0f,
         distanceInMeters = distanceInMeters.value.toInt(),
-        timeInMillis = _timeInMillis.value,
-        caloriesBurned = 0,
+        avgSpeedInKMH = 0f, // Placeholder, can be calculated later
+        caloriesBurned = 0, // Placeholder, can be calculated later
         locationList = _polyLinesFlow.value
     )
 

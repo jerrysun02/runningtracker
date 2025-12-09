@@ -87,9 +87,9 @@ fun RunCard(navController: NavController, viewmodel: MainViewmodel, run: Run) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Date: ${SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date(run.timestamp))}")
+                Text("Date: ${SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date(run.startedAt))}")
                 Text("Distance: %.2f km".format(calculateDistance(run.locationList) / 1000f))
-                Text("Duration: ${formatTime(run.timeInMillis)}")
+                Text("Duration: ${formatTime(run.durationInMillis)}")
             }
             IconButton(onClick = { viewmodel.deleteRun(run) }) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete Run")

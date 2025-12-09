@@ -1,6 +1,5 @@
 package com.myprojects.modules.runningtracker.db
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -20,33 +19,33 @@ interface RunDAO {
     @Update
     suspend fun updateRun(run: Run)
 
-    @Query("SELECT * FROM runs_table ORDER BY id DESC")
+    @Query("SELECT * FROM runs_table ORDER BY startedAt DESC")
     fun getAllRunsSortedByDate(): Flow<List<Run>>
 
     @Query("SELECT * FROM runs_table WHERE id = :id LIMIT 1")
     fun getRoute(id: Int): List<Run>
 
-    @Query("SELECT * FROM runs_table ORDER BY timeInMillis DESC")
-    fun getAllRunsSortedByTimeInMillis(): LiveData<List<Run>>
+    @Query("SELECT * FROM runs_table ORDER BY durationInMillis DESC")
+    fun getAllRunsSortedByTimeInMillis(): Flow<List<Run>>
 
     @Query("SELECT * FROM runs_table ORDER BY caloriesBurned DESC")
-    fun getAllRunsSortedByCaloriesBurned(): LiveData<List<Run>>
+    fun getAllRunsSortedByCaloriesBurned(): Flow<List<Run>>
 
     @Query("SELECT * FROM runs_table ORDER BY avgSpeedInKMH DESC")
-    fun getAllRunsSortedByAvgSpeed(): LiveData<List<Run>>
+    fun getAllRunsSortedByAvgSpeed(): Flow<List<Run>>
 
     @Query("SELECT * FROM runs_table ORDER BY distanceInMeters DESC")
-    fun getAllRunsSortedByDistance(): LiveData<List<Run>>
+    fun getAllRunsSortedByDistance(): Flow<List<Run>>
 
-    @Query("SELECT SUM(timeInMillis) FROM runs_table")
-    fun getTotalTimeInMillis(): LiveData<Long>
+    @Query("SELECT SUM(durationInMillis) FROM runs_table")
+    fun getTotalTimeInMillis(): Flow<Long>
 
     @Query("SELECT SUM(caloriesBurned) FROM runs_table")
-    fun getTotalCaloriesBurned(): LiveData<Int>
+    fun getTotalCaloriesBurned(): Flow<Int>
 
     @Query("SELECT SUM(distanceInMeters) FROM runs_table")
-    fun getTotalDistanceInMeters(): LiveData<Int>
+    fun getTotalDistanceInMeters(): Flow<Int>
 
     @Query("SELECT AVG(avgSpeedInKMH) FROM runs_table")
-    fun getTotalAvgSpeed(): LiveData<Float>
+    fun getTotalAvgSpeed(): Flow<Float>
 }
