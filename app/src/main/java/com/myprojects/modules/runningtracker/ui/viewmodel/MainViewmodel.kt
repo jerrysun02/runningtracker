@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.combine
 
 @HiltViewModel
 class MainViewmodel @Inject constructor(
@@ -46,6 +47,21 @@ class MainViewmodel @Inject constructor(
 
     val distanceInMeters: StateFlow<Float> = polyLinesFlow.map { polylines ->
         calculateDistance(polylines)
+    }.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        initialValue = 0f
+    )
+
+    val avgSpeedInKMH: StateFlow<Float> = combine(
+        distanceInMeters,
+        timeInMillis
+    ) { distance, time ->
+        if (time == 0L) {
+            0f
+        } else {
+            (distance / 1000f) / (time / 1000f / 60 / 60) // distance in km / time in hours
+        }
     }.stateIn(
         scope = viewModelScope,
         started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
@@ -158,7 +174,7 @@ class MainViewmodel @Inject constructor(
         durationInMillis = _timeInMillis.value,
         img = null,
         distanceInMeters = distanceInMeters.value.toInt(),
-        avgSpeedInKMH = 0f, // Placeholder, can be calculated later
+        avgSpeedInKMH = avgSpeedInKMH.value,
         caloriesBurned = 0, // Placeholder, can be calculated later
         locationList = _polyLinesFlow.value
     )

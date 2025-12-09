@@ -90,6 +90,7 @@ fun RunCard(navController: NavController, viewmodel: MainViewmodel, run: Run) {
                 Text("Date: ${SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date(run.startedAt))}")
                 Text("Distance: %.2f km".format(calculateDistance(run.locationList) / 1000f))
                 Text("Duration: ${formatTime(run.durationInMillis)}")
+                Text("Avg Speed: %.2f km/h".format(run.avgSpeedInKMH))
             }
             IconButton(onClick = { viewmodel.deleteRun(run) }) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete Run")

@@ -48,6 +48,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val timeInMillis by viewmodel.timeInMillis.collectAsState()
     val currentLocation by viewmodel.currentLocation.collectAsState()
     val distanceInMeters by viewmodel.distanceInMeters.collectAsState()
+    val avgSpeedInKMH by viewmodel.avgSpeedInKMH.collectAsState()
 
     LaunchedEffect(Unit) {
         viewmodel.getLocationFlow()
@@ -113,6 +114,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Time: ${formatTime(timeInMillis)}")
                     Text("Distance: %.2f km".format(distanceInMeters / 1000f))
+                    Text("Avg Speed: %.2f km/h".format(avgSpeedInKMH))
                 }
             }
             Row(
