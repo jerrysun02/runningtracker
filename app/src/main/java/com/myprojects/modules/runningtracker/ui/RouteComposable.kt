@@ -23,11 +23,11 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Polyline
-import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RouteComposable(navController: NavController, viewmodel: MainViewmodel, id: Int) {
+fun RouteComposable(navController: NavController, viewmodel: TrackingViewmodel, id: Int) {
     val cameraPositionState = CameraPositionState()
     val polyLines by viewmodel.polyLinesFlow.collectAsStateWithLifecycle()
     val points = mutableListOf<LatLng>()

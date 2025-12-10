@@ -37,11 +37,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
-import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginComposable(navController: NavController, viewModel: MainViewmodel) {
+fun LoginComposable(navController: NavController, viewModel: TrackingViewmodel) {
     val context = LocalContext.current
     val activity = context as Activity
     val locationPermissionsGranted =

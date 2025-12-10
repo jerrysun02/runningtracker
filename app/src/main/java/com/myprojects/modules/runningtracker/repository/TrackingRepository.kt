@@ -10,7 +10,7 @@ import com.myprojects.modules.runningtracker.db.RunDAO
 import com.myprojects.modules.runningtracker.services.TrackingService
 import javax.inject.Inject
 
-class MainRepository @Inject constructor(
+class TrackingRepository @Inject constructor(
     private val context: Context,
     private val runDAO: RunDAO
 ) {

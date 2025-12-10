@@ -18,12 +18,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.myprojects.modules.runningtracker.ui.theme.RunningTrackerTheme
-import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    val viewmodel: MainViewmodel by viewModels()
+    val viewmodel: TrackingViewmodel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Navigation() {
     val navController = rememberNavController()
-    val viewmodel: MainViewmodel = viewModel()
+    val viewmodel: TrackingViewmodel = viewModel()
 
     NavHost(navController = navController, startDestination = Routes.Login.route) {
         composable(Routes.Login.route) {

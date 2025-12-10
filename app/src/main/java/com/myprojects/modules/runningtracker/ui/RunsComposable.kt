@@ -25,7 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.myprojects.modules.runningtracker.db.Run
-import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
 import com.myprojects.modules.runningtracker.util.calculateDistance
 import com.myprojects.modules.runningtracker.util.formatTime
 import timber.log.Timber
@@ -34,7 +34,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
+fun RunsComposable(navController: NavController, viewmodel: TrackingViewmodel) {
     val runsFlow by viewmodel.runsFlow.collectAsState()
 
     Column(
@@ -70,11 +70,11 @@ fun RunsComposable(navController: NavController, viewmodel: MainViewmodel) {
 }
 
 @Composable
-fun RunCard(navController: NavController, viewmodel: MainViewmodel, run: Run) {
+fun RunCard(navController: NavController, viewmodel: TrackingViewmodel, run: Run) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(2.dp)
             .clip(RoundedCornerShape(8.dp)),
         onClick = {
             navController.navigate(route = Routes.Route.withArgs(run.id.toString()))

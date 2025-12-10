@@ -31,7 +31,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.myprojects.modules.runningtracker.ui.viewmodel.MainViewmodel
+import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
 import kotlinx.coroutines.launch
 import com.myprojects.modules.runningtracker.util.formatTime
 import androidx.compose.material3.Card
@@ -40,7 +40,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 
 @Composable
-fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
+fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
     val coroutineScope = rememberCoroutineScope()
     val cameraPositionState = rememberCameraPositionState()
     val trackingState by viewmodel.trackingState.collectAsState()

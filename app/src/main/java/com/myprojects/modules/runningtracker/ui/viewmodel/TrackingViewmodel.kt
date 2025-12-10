@@ -7,7 +7,7 @@ import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_PAUSED
 import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_RUNNING
 import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_STOPPED
 import com.myprojects.modules.runningtracker.db.Run
-import com.myprojects.modules.runningtracker.repository.MainRepository
+import com.myprojects.modules.runningtracker.repository.TrackingRepository
 import com.myprojects.modules.runningtracker.services.TrackingService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -26,8 +26,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
 
 @HiltViewModel
-class MainViewmodel @Inject constructor(
-    private val mainRepository: MainRepository
+class TrackingViewmodel @Inject constructor(
+    private val trackingRepository: TrackingRepository
 ) : ViewModel() {
     private val _polyLinesFlow = MutableStateFlow<List<List<LatLng>>>(emptyList())
     val polyLinesFlow = _polyLinesFlow
@@ -89,7 +89,7 @@ class MainViewmodel @Inject constructor(
         }
         // Collect runs directly from the repository as a Flow
         viewModelScope.launch {
-            mainRepository.getAllRunsSortedByDate().collect { runs ->
+            trackingRepository.getAllRunsSortedByDate().collect { runs ->
                 _runsFlow.value = runs
             }
         }
@@ -128,7 +128,7 @@ class MainViewmodel @Inject constructor(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 _polyLinesFlow.value = emptyList()
-                val run = mainRepository.getRoute(id)
+                val run = trackingRepository.getRoute(id)
                 run.onEach { runValue ->
                     runValue.locationList.onEach { it1 ->
                         if (it1.isNotEmpty()) {
@@ -147,11 +147,11 @@ class MainViewmodel @Inject constructor(
         val currentPolyLines = _polyLinesFlow.value.toMutableList()
         currentPolyLines.add(mutableListOf())
         _polyLinesFlow.value = currentPolyLines
-        mainRepository.startLocationService()
+        trackingRepository.startLocationService()
     }
 
     fun pauseRun() {
-        mainRepository.pauseLocationService()
+        trackingRepository.pauseLocationService()
     }
 
     fun startRun() {
@@ -161,12 +161,12 @@ class MainViewmodel @Inject constructor(
         val currentPolyLines = _polyLinesFlow.value.toMutableList()
         currentPolyLines.add(mutableListOf())
         _polyLinesFlow.value = currentPolyLines
-        mainRepository.startLocationService()
+        trackingRepository.startLocationService()
     }
 
     fun updateRun() = viewModelScope.launch {
-        mainRepository.insertRun(createRun())
-        mainRepository.stopLocationService()
+        trackingRepository.insertRun(createRun())
+        trackingRepository.stopLocationService()
         _polyLinesFlow.value = emptyList()
         _trackingState.value = TRACKING_STATE_PAUSED
         _timeInMillis.value = 0L
@@ -185,6 +185,6 @@ class MainViewmodel @Inject constructor(
 
     fun deleteRun(run: Run) = viewModelScope.launch {
         Timber.d("deleteRun: $run")
-        mainRepository.deleteRun(run)
+        trackingRepository.deleteRun(run)
     }
 }
