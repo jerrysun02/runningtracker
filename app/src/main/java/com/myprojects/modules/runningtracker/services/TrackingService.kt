@@ -50,6 +50,8 @@ import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_STOPPED
 typealias Polyline = MutableList<LatLng>
 typealias Polylines = MutableList<Polyline>
 
+data class LocationData(val latLng: LatLng, val bearing: Float)
+
 @AndroidEntryPoint
 class TrackingService : LifecycleService() {
 
@@ -76,7 +78,7 @@ class TrackingService : LifecycleService() {
 
     companion object {
         val isTracking = MutableStateFlow(TRACKING_STATE_PAUSED) // 0: Paused, 1: Running, 2: Stopped/Initial
-        val locationFlow = MutableStateFlow<LatLng?>(null)
+        val locationFlow = MutableStateFlow<LocationData?>(null)
         val timeRunInMillis = MutableStateFlow(0L)
     }
 
@@ -215,8 +217,8 @@ class TrackingService : LifecycleService() {
                             currentTime - previousUpdateTime >= MIN_TIME_BETWEEN_UPDATES_THRESHOLD ||
                             previousLocation!!.distanceTo(location) >= MIN_DISTANCE_CHANGE_THRESHOLD
                         ) {
-                            locationFlow.value = LatLng(location.latitude, location.longitude)
-                            Timber.d("NEW LOCATION: ${location.latitude}, ${location.longitude} Accuracy: ${location.accuracy}m")
+                            locationFlow.value = LocationData(LatLng(location.latitude, location.longitude), location.bearing)
+                            Timber.d("NEW LOCATION: ${location.latitude}, ${location.longitude} Accuracy: ${location.accuracy}m, Bearing: ${location.bearing}")
                             previousLocation = location
                             previousUpdateTime = currentTime
                         }

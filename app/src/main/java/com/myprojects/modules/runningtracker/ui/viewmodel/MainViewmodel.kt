@@ -42,6 +42,9 @@ class MainViewmodel @Inject constructor(
     private val _currentLocation = MutableStateFlow<LatLng?>(null)
     val currentLocation: StateFlow<LatLng?> = _currentLocation.asStateFlow()
 
+    private val _currentBearing = MutableStateFlow(0f)
+    val currentBearing: StateFlow<Float> = _currentBearing.asStateFlow()
+
     private val _timeInMillis = MutableStateFlow(0L)
     val timeInMillis: StateFlow<Long> = _timeInMillis.asStateFlow()
 
@@ -100,15 +103,16 @@ class MainViewmodel @Inject constructor(
                     if (state == TRACKING_STATE_RUNNING) {
                         val currentPolyLines = _polyLinesFlow.value.toMutableList()
                         if (currentPolyLines.isEmpty() || currentPolyLines.last().isEmpty()) {
-                            currentPolyLines.add(mutableListOf(it))
+                            currentPolyLines.add(mutableListOf(it.latLng))
                         } else {
                             val currentPolyLine = currentPolyLines.last().toMutableList()
-                            currentPolyLine.add(it)
+                            currentPolyLine.add(it.latLng)
                             currentPolyLines[currentPolyLines.lastIndex] = currentPolyLine
                         }
                         _polyLinesFlow.value = currentPolyLines
                     }
-                    _currentLocation.value = it
+                    _currentLocation.value = it.latLng
+                    _currentBearing.value = it.bearing
                 }
             }
         }

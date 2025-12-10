@@ -49,6 +49,7 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
     val currentLocation by viewmodel.currentLocation.collectAsState()
     val distanceInMeters by viewmodel.distanceInMeters.collectAsState()
     val avgSpeedInKMH by viewmodel.avgSpeedInKMH.collectAsState()
+    val currentBearing by viewmodel.currentBearing.collectAsState()
 
     LaunchedEffect(Unit) {
         viewmodel.getLocationFlow()
@@ -87,7 +88,11 @@ fun MapComposable(navController: NavController, viewmodel: MainViewmodel) {
                 LaunchedEffect(it) {
                     cameraPositionState.animate(
                         CameraUpdateFactory.newCameraPosition(
-                            CameraPosition.fromLatLngZoom(it, 17f)
+                            CameraPosition.builder()
+                                .target(it)
+                                .zoom(17f)
+                                .bearing(currentBearing) // Apply the bearing
+                                .build()
                         )
                     )
                 }
