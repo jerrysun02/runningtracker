@@ -41,7 +41,7 @@ import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginComposable(navController: NavController, viewModel: TrackingViewmodel) {
+fun LoginComposable(navController: NavController) {
     val context = LocalContext.current
     val activity = context as Activity
     val locationPermissionsGranted =

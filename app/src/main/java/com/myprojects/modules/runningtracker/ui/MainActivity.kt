@@ -50,7 +50,7 @@ fun Navigation() {
 
     NavHost(navController = navController, startDestination = Routes.Login.route) {
         composable(Routes.Login.route) {
-            LoginComposable(navController = navController, viewmodel)
+            LoginComposable(navController = navController)
         }
         composable(Routes.Runs.route) {
             RunsComposable(navController = navController, viewmodel)
