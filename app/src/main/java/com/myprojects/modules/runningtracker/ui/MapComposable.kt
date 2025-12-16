@@ -51,6 +51,20 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
     val avgSpeedInKMH by viewmodel.avgSpeedInKMH.collectAsState()
     val currentBearing by viewmodel.currentBearing.collectAsState()
 
+    LaunchedEffect(currentLocation, currentBearing) {
+        currentLocation?.let {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.builder()
+                        .target(it)
+                        .zoom(17f)
+                        .bearing(currentBearing)
+                        .build()
+                )
+            )
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewmodel.getLocationFlow()
         viewmodel.navigateToRunsScreen.collect { // Observe for navigation events
@@ -85,17 +99,6 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
         ) {
             currentLocation?.let {
                 Marker(state = MarkerState(position = it))
-                LaunchedEffect(it) {
-                    cameraPositionState.animate(
-                        CameraUpdateFactory.newCameraPosition(
-                            CameraPosition.builder()
-                                .target(it)
-                                .zoom(17f)
-                                .bearing(currentBearing) // Apply the bearing
-                                .build()
-                        )
-                    )
-                }
             }
 
             if (polyLines.isNotEmpty()) {
