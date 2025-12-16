@@ -46,3 +46,4 @@ fun haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): F
 
     return (R * c * 1000f).toFloat() // Convert to meters
 }
+
