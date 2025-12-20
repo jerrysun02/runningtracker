@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "224890153176",
+    "project_id": "runningtracker-f2d9b",
+    "storage_bucket": "runningtracker-f2d9b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224890153176:android:b1c6d6bed3fc6c69184fad",
+        "android_client_info": {
+          "package_name": "com.myprojects.modules.runningtracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTByX613fD5rDLNzE1I_8CCi-6ASUCjI8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
