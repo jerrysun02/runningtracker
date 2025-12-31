@@ -23,7 +23,7 @@ interface RunDAO {
     fun getAllRunsSortedByDate(): Flow<List<Run>>
 
     @Query("SELECT * FROM runs_table WHERE id = :id LIMIT 1")
-    fun getRoute(id: Int): List<Run>
+    fun getRunById(id: Int): Flow<Run>
 
     @Query("SELECT * FROM runs_table ORDER BY durationInMillis DESC")
     fun getAllRunsSortedByTimeInMillis(): Flow<List<Run>>

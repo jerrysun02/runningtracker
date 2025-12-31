@@ -10,11 +10,9 @@ import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.repository.TrackingRepository
 import com.myprojects.modules.runningtracker.services.TrackingService
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 import com.myprojects.modules.runningtracker.util.calculateDistance
@@ -24,6 +22,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 @HiltViewModel
 class TrackingViewmodel @Inject constructor(
@@ -75,6 +75,9 @@ class TrackingViewmodel @Inject constructor(
     private val _navigateToRunsScreen = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val navigateToRunsScreen: SharedFlow<Unit> = _navigateToRunsScreen
 
+    private val _run = MutableStateFlow<Run?>(null)
+    val run: StateFlow<Run?> = _run.asStateFlow()
+
     init {
         // Initialize state based on TrackingService's current state
         viewModelScope.launch {
@@ -124,24 +127,13 @@ class TrackingViewmodel @Inject constructor(
         }
     }
 
-    fun getRoute(id: Int) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                _polyLinesFlow.value = emptyList()
-                val run = trackingRepository.getRoute(id)
-                run.onEach { runValue ->
-                    runValue.locationList.onEach { it1 ->
-                        if (it1.isNotEmpty()) {
-                            _polyLinesFlow.value = _polyLinesFlow.value.toMutableList().apply {
-                                this.add(it1.toMutableList())
-                            }
-                        }
-                    }
-                }
-                _trackingState.value = TRACKING_STATE_STOPPED
+    fun getRunById(id: Int) =
+        trackingRepository.getRunById(id)
+            .onEach {
+                _run.value = it
+                _polyLinesFlow.value = it.locationList
             }
-        }
-    }
+            .launchIn(viewModelScope)
 
     fun resumeRun() {
         val currentPolyLines = _polyLinesFlow.value.toMutableList()

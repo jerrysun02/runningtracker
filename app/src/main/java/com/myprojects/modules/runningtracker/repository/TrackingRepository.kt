@@ -22,7 +22,7 @@ class TrackingRepository @Inject constructor(
 
     fun getAllRunsSortedByDate() = runDAO.getAllRunsSortedByDate()
 
-    fun getRoute(id: Int) = runDAO.getRoute(id)
+    fun getRunById(id: Int) = runDAO.getRunById(id)
 
     fun getAllRunsSortedByDistance() = runDAO.getAllRunsSortedByDistance()
 
