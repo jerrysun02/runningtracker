@@ -32,10 +32,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <meta-data android:name="com.google.android.geo.API_KEY"
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBj3lE60JKOhnykPe5IG8hRSf3QNIZAs-o"/>
-        <service android:name=".services.TrackingService"
-            android:foregroundServiceType="location" />
+        <service
+            android:name=".services.TrackingService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
     </application>
 
 </manifest>

@@ -47,9 +47,6 @@ import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_PAUSED
 import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_RUNNING
 import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_STOPPED
 
-typealias Polyline = MutableList<LatLng>
-typealias Polylines = MutableList<Polyline>
-
 data class LocationData(val latLng: LatLng, val bearing: Float)
 
 @AndroidEntryPoint
@@ -145,7 +142,7 @@ class TrackingService : LifecycleService() {
     }
 
     private fun startTimer() {
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             while (isTracking.value == TRACKING_STATE_RUNNING) {
                 serviceRunningTime = System.currentTimeMillis() - currentRunStartTime
                 timeRunInMillis.value = serviceRunningTime
