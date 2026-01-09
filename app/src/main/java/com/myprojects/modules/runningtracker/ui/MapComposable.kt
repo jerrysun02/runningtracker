@@ -35,7 +35,6 @@ import kotlinx.coroutines.launch
 import com.myprojects.modules.runningtracker.util.formatTime
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import com.google.android.gms.maps.CameraUpdateFactory
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
