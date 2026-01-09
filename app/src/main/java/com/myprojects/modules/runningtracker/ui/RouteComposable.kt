@@ -15,9 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -72,47 +76,44 @@ fun RouteComposable(navController: NavController, viewmodel: TrackingViewmodel, 
                 }
             }
         }
-        run?.let {
-            Card(
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FloatingActionButton(
+                onClick = { navController.popBackStack() },
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp, start = 16.dp, end = 16.dp)
-                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 4.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(8.dp)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+            run?.let {
+                Card(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF00008B))
                 ) {
-                    Text(
-                        text = "Time: ${formatTime(it.durationInMillis)}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Text(
-                        text = "Distance: ${it.distanceInMeters.toKilometers()} km",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Text(
-                        text = "Avg Speed: ${it.avgSpeedInKMH.toFormattedAvgSpeed()} km/h",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Time: ${formatTime(it.durationInMillis)}",
+                            modifier = Modifier.padding(bottom = 4.dp),
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Distance: ${it.distanceInMeters.toKilometers()} km",
+                            modifier = Modifier.padding(bottom = 4.dp),
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Avg Speed: ${it.avgSpeedInKMH.toFormattedAvgSpeed()} km/h",
+                            color = Color.White
+                        )
+                    }
                 }
             }
-        }
-
-        FloatingActionButton(
-            onClick = { navController.popBackStack() },
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
     }
 }

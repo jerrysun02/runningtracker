@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -35,6 +34,8 @@ import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
 import kotlinx.coroutines.launch
 import com.myprojects.modules.runningtracker.util.formatTime
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import com.google.android.gms.maps.CameraUpdateFactory
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
@@ -43,13 +44,13 @@ import androidx.compose.foundation.layout.Arrangement
 fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
     val coroutineScope = rememberCoroutineScope()
     val cameraPositionState = rememberCameraPositionState()
-    val trackingState by viewmodel.trackingState.collectAsState()
+    val trackingState by viewmodel.trackingState.collectAsStateWithLifecycle()
     val polyLines by viewmodel.polyLinesFlow.collectAsStateWithLifecycle()
-    val timeInMillis by viewmodel.timeInMillis.collectAsState()
-    val currentLocation by viewmodel.currentLocation.collectAsState()
-    val distanceInMeters by viewmodel.distanceInMeters.collectAsState()
-    val avgSpeedInKMH by viewmodel.avgSpeedInKMH.collectAsState()
-    val currentBearing by viewmodel.currentBearing.collectAsState()
+    val timeInMillis by viewmodel.timeInMillis.collectAsStateWithLifecycle()
+    val currentLocation by viewmodel.currentLocation.collectAsStateWithLifecycle()
+    val distanceInMeters by viewmodel.distanceInMeters.collectAsStateWithLifecycle()
+    val avgSpeedInKMH by viewmodel.avgSpeedInKMH.collectAsStateWithLifecycle()
+    val currentBearing by viewmodel.currentBearing.collectAsStateWithLifecycle()
 
     LaunchedEffect(currentLocation, currentBearing) {
         currentLocation?.let {
@@ -118,11 +119,14 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Card(modifier = Modifier.padding(vertical = 8.dp)) {
+            Card(
+                modifier = Modifier.padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF00008B))
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Time: ${formatTime(timeInMillis)}")
-                    Text("Distance: %.2f km".format(distanceInMeters / 1000f))
-                    Text("Avg Speed: %.2f km/h".format(avgSpeedInKMH))
+                    Text("Time: ${formatTime(timeInMillis)}", color = Color.White)
+                    Text("Distance: %.2f km".format(distanceInMeters / 1000f), color = Color.White)
+                    Text("Avg Speed: %.2f km/h".format(avgSpeedInKMH), color = Color.White)
                 }
             }
             Row(
