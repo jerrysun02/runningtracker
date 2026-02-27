@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,14 +84,15 @@ fun RouteComposable(navController: NavController, viewmodel: TrackingViewmodel, 
             FloatingActionButton(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier
-                    .padding(start = 16.dp, end = 4.dp)
+                    .padding(start = 16.dp, end = 4.dp),
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
             run?.let {
                 Card(
                     modifier = Modifier.padding(vertical = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF00008B))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(

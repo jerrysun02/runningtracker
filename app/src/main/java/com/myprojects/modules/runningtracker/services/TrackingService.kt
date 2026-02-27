@@ -29,8 +29,6 @@ import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_ID
 import com.myprojects.modules.runningtracker.Constants.TIMER_UPDATE_INTERVAL
 import com.myprojects.modules.runningtracker.R
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch

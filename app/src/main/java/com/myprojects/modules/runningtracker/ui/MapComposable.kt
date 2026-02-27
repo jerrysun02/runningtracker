@@ -38,6 +38,7 @@ import androidx.compose.material3.CardDefaults
 import com.google.android.gms.maps.CameraUpdateFactory
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
@@ -120,7 +121,7 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
         ) {
             Card(
                 modifier = Modifier.padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF00008B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Time: ${formatTime(timeInMillis)}", color = Color.White)
@@ -143,7 +144,8 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
                             1 -> pauseTracking() // Running, so pause
                             0 -> resumeTracking() // Paused, so resume
                         }
-                    }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
                 ) {
                     Icon(
                         imageVector = if (trackingState == 1) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -152,6 +154,7 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
                 }
                 FloatingActionButton(
                     onClick = { coroutineScope.launch { stopTracking() } },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
                     modifier = Modifier.padding(start = 16.dp) // Add spacing between buttons
                 ) {
                     Icon(imageVector = Icons.Default.Stop, contentDescription = "Stop")
