@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.LocationSearching
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -16,6 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +43,11 @@ import androidx.compose.material3.CardDefaults
 import com.google.android.gms.maps.CameraUpdateFactory
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallFloatingActionButton
 
 @Composable
 fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
@@ -52,17 +61,21 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
     val avgSpeedInKMH by viewmodel.avgSpeedInKMH.collectAsStateWithLifecycle()
     val currentBearing by viewmodel.currentBearing.collectAsStateWithLifecycle()
 
-    LaunchedEffect(currentLocation, currentBearing) {
-        currentLocation?.let {
-            cameraPositionState.animate(
-                CameraUpdateFactory.newCameraPosition(
-                    CameraPosition.builder()
-                        .target(it)
-                        .zoom(17f)
-                        .bearing(currentBearing)
-                        .build()
+    var isAutoFollowEnabled by remember { mutableStateOf(true) }
+
+    LaunchedEffect(currentLocation, currentBearing, isAutoFollowEnabled) {
+        if (isAutoFollowEnabled) {
+            currentLocation?.let {
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newCameraPosition(
+                        CameraPosition.builder()
+                            .target(it)
+                            .zoom(17f)
+                            .bearing(currentBearing)
+                            .build()
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -90,13 +103,13 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
 
     fun stopTracking() {
         viewmodel.updateRun() // This will now trigger the navigation via SharedFlow
-        // navController.navigate(route = Routes.Runs.route) // Remove direct navigation
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState
+            cameraPositionState = cameraPositionState,
+            onMapClick = { isAutoFollowEnabled = false }
         ) {
             currentLocation?.let {
                 Marker(state = MarkerState(position = it))
@@ -111,63 +124,106 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
             }
         }
 
-        Row(
+        // Auto-follow toggle button
+        SmallFloatingActionButton(
+            onClick = { isAutoFollowEnabled = !isAutoFollowEnabled },
             modifier = Modifier
-                .fillMaxWidth()
+                .align(Alignment.TopEnd)
+                .padding(16.dp),
+            containerColor = if (isAutoFollowEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            contentColor = if (isAutoFollowEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+        ) {
+            Icon(
+                imageVector = if (isAutoFollowEnabled) Icons.Default.MyLocation else Icons.Default.LocationSearching,
+                contentDescription = "Toggle Auto-Follow"
+            )
+        }
+
+        Column(
+            modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(bottom = 16.dp)
         ) {
             Card(
-                modifier = Modifier.padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f))
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f))
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Time: ${formatTime(timeInMillis)}", color = Color.White)
-                    Text("Distance: %.2f km".format(distanceInMeters / 1000f), color = Color.White)
-                    Text("Avg Speed: %.2f km/h".format(avgSpeedInKMH), color = Color.White)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StatItem("Time", formatTime(timeInMillis))
+                    StatItem("Distance", "%.2f km".format(distanceInMeters / 1000f))
+                    StatItem("Avg Speed", "%.1f km/h".format(avgSpeedInKMH))
                 }
             }
+
             Row(
                 modifier = Modifier
-                    .padding(
-                        horizontal = 0.dp,
-                        vertical = 0.dp
-                    ), // Adjust padding as parent is now a Row
-                horizontalArrangement = Arrangement.SpaceAround,
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 FloatingActionButton(
                     onClick = {
                         when (trackingState) {
-                            1 -> pauseTracking() // Running, so pause
-                            0 -> resumeTracking() // Paused, so resume
+                            1 -> pauseTracking()
+                            0 -> resumeTracking()
                         }
                     },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(64.dp)
                 ) {
                     Icon(
                         imageVector = if (trackingState == 1) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "Play/Pause"
+                        contentDescription = "Play/Pause",
+                        modifier = Modifier.size(32.dp)
                     )
                 }
+                
+                Spacer(modifier = Modifier.width(24.dp))
+
                 FloatingActionButton(
                     onClick = { coroutineScope.launch { stopTracking() } },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(start = 16.dp) // Add spacing between buttons
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(64.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Stop, contentDescription = "Stop")
+                    Icon(
+                        imageVector = Icons.Default.Stop, 
+                        contentDescription = "Stop",
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
         }
     }
 }
 
+@Composable
+fun StatItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
 @Preview
 @Composable
 fun PreviewMapComposable() {
-    // This preview won't work without a mock NavController and ViewModel
-    // For demonstration purposes, you might want to create mock objects
-    // to see the composable in isolation.
+    // Mock preview logic
 }
