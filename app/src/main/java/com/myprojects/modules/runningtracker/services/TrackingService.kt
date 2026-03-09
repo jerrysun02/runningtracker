@@ -30,7 +30,6 @@ import com.myprojects.modules.runningtracker.Constants.TIMER_UPDATE_INTERVAL
 import com.myprojects.modules.runningtracker.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -59,6 +58,9 @@ class TrackingService : LifecycleService() {
     @Inject
     lateinit var powerManager: PowerManager
 
+    @Inject
+    lateinit var trackingManager: TrackingManager
+
     private lateinit var wakeLock: PowerManager.WakeLock
 
     lateinit var curNotificationBuilder: NotificationCompat.Builder
@@ -71,12 +73,6 @@ class TrackingService : LifecycleService() {
     private var previousLocation: Location? = null
     private var previousUpdateTime: Long = 0L
 
-    companion object {
-        val isTracking = MutableStateFlow(TRACKING_STATE_PAUSED) // 0: Paused, 1: Running, 2: Stopped/Initial
-        val locationFlow = MutableStateFlow<LocationData?>(null)
-        val timeRunInMillis = MutableStateFlow(0L)
-    }
-
     override fun onCreate() {
         super.onCreate()
         curNotificationBuilder = baseNotificationBuilder
@@ -84,9 +80,8 @@ class TrackingService : LifecycleService() {
             powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RunningTracker::WakeLock")
         postInitialValues()
         lifecycleScope.launch {
-            isTracking.collect { isTracking ->
-                updateLocationTracking(isTracking == TRACKING_STATE_RUNNING)
-        //        updateNotificationTrackingState(isTracking == TRACKING_STATE_RUNNING)
+            trackingManager.isTracking.collect { state ->
+                updateLocationTracking(state == TRACKING_STATE_RUNNING)
             }
         }
     }
@@ -119,9 +114,9 @@ class TrackingService : LifecycleService() {
     }
 
     private fun postInitialValues() {
-        isTracking.value = TRACKING_STATE_PAUSED
-        locationFlow.value = null
-        timeRunInMillis.value = 0L
+        trackingManager.updateTrackingState(TRACKING_STATE_PAUSED)
+        trackingManager.updateLocation(null)
+        trackingManager.updateTime(0L)
         serviceRunningTime = 0L
         lastSecondTimestamp = 0L
         currentRunStartTime = 0L
@@ -141,14 +136,14 @@ class TrackingService : LifecycleService() {
 
     private fun startTimer() {
         lifecycleScope.launch {
-            while (isTracking.value == TRACKING_STATE_RUNNING) {
+            while (trackingManager.isTracking.value == TRACKING_STATE_RUNNING) {
                 serviceRunningTime = System.currentTimeMillis() - currentRunStartTime
-                timeRunInMillis.value = serviceRunningTime
+                trackingManager.updateTime(serviceRunningTime)
 
                 if (serviceRunningTime >= MAX_RUN_DURATION_MILLIS) {
                     Timber.d("Run duration exceeded 8 hours. Signaling stop.")
-                    isTracking.value = TRACKING_STATE_STOPPED // Signal to ViewModel to stop and save
-                    break // Exit the loop as we've signaled to stop
+                    trackingManager.updateTrackingState(TRACKING_STATE_STOPPED)
+                    break
                 }
 
                 if (serviceRunningTime >= lastSecondTimestamp + 1000L) {
@@ -167,8 +162,7 @@ class TrackingService : LifecycleService() {
                 }
                 delay(TIMER_UPDATE_INTERVAL)
             }
-            // After the loop, if tracking was stopped (value 2), ensure the service is killed
-            if (isTracking.value == TRACKING_STATE_STOPPED) {
+            if (trackingManager.isTracking.value == TRACKING_STATE_STOPPED) {
                 killService()
             }
         }
@@ -199,12 +193,11 @@ class TrackingService : LifecycleService() {
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             super.onLocationResult(result)
-            if (isTracking.value == TRACKING_STATE_RUNNING) {
+            if (trackingManager.isTracking.value == TRACKING_STATE_RUNNING) {
                 result.locations.let { locations ->
                     for (location in locations) {
                         if (location.accuracy > MIN_ACCURACY_THRESHOLD) {
-                            Timber.d("Ignoring inaccurate location: ${location.accuracy}m")
-                            continue // Skip inaccurate locations
+                            continue
                         }
 
                         val currentTime = System.currentTimeMillis()
@@ -212,8 +205,7 @@ class TrackingService : LifecycleService() {
                             currentTime - previousUpdateTime >= MIN_TIME_BETWEEN_UPDATES_THRESHOLD ||
                             previousLocation!!.distanceTo(location) >= MIN_DISTANCE_CHANGE_THRESHOLD
                         ) {
-                            locationFlow.value = LocationData(LatLng(location.latitude, location.longitude), location.bearing)
-                            Timber.d("NEW LOCATION: ${location.latitude}, ${location.longitude} Accuracy: ${location.accuracy}m, Bearing: ${location.bearing}")
+                            trackingManager.updateLocation(LocationData(LatLng(location.latitude, location.longitude), location.bearing))
                             previousLocation = location
                             previousUpdateTime = currentTime
                         }
@@ -224,39 +216,15 @@ class TrackingService : LifecycleService() {
     }
 
     private fun pauseService() {
-        isTracking.value = TRACKING_STATE_PAUSED
+        trackingManager.updateTrackingState(TRACKING_STATE_PAUSED)
         if (wakeLock.isHeld) wakeLock.release()
     }
 
     private fun startTracking() {
-        isTracking.value = TRACKING_STATE_RUNNING
+        trackingManager.updateTrackingState(TRACKING_STATE_RUNNING)
         currentRunStartTime = System.currentTimeMillis() - serviceRunningTime
         startTimer()
-        if (!wakeLock.isHeld) wakeLock.acquire(1000 * 60 * 60 * 8L) // Acquire for 8 hours
-    }
-
-    private fun updateNotificationTrackingState(isTracking: Boolean) {
-        val notificationActionText = if (isTracking) "Pause" else "Resume"
-        val pendingIntent = if (isTracking) {
-            val pauseIntent =
-                Intent(this, TrackingService::class.java).apply { action = ACTION_PAUSE_SERVICE }
-            PendingIntent.getService(this, 1, pauseIntent, FLAG_IMMUTABLE)
-        } else {
-            val resumeIntent = Intent(this, TrackingService::class.java).apply {
-                action = ACTION_START_OR_RESUME_SERVICE
-            }
-            PendingIntent.getService(this, 2, resumeIntent, FLAG_IMMUTABLE)
-        }
-
-        val notificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        curNotificationBuilder.javaClass.getDeclaredField("mActions").apply { isAccessible = true }
-            .set(curNotificationBuilder, ArrayList<NotificationCompat.Action>())
-
-        curNotificationBuilder = baseNotificationBuilder
-            .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
-        notificationManager.notify(NOTIFICATION_ID, curNotificationBuilder.build())
+        if (!wakeLock.isHeld) wakeLock.acquire(1000 * 60 * 60 * 8L)
     }
 
     private fun createNotificationChannel(notificationManager: NotificationManager) {
@@ -269,7 +237,7 @@ class TrackingService : LifecycleService() {
     }
 
     private fun killService() {
-        isTracking.value = TRACKING_STATE_PAUSED // Reset to paused/initial state
+        trackingManager.updateTrackingState(TRACKING_STATE_PAUSED)
         postInitialValues()
         stopSelf()
         if (wakeLock.isHeld) wakeLock.release()

@@ -8,7 +8,7 @@ import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_RUNNING
 import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_STOPPED
 import com.myprojects.modules.runningtracker.db.Run
 import com.myprojects.modules.runningtracker.repository.TrackingRepository
-import com.myprojects.modules.runningtracker.services.TrackingService
+import com.myprojects.modules.runningtracker.services.TrackingManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,26 +27,30 @@ import kotlinx.coroutines.flow.onEach
 
 @HiltViewModel
 class TrackingViewmodel @Inject constructor(
-    private val trackingRepository: TrackingRepository
+    private val trackingRepository: TrackingRepository,
+    private val trackingManager: TrackingManager
 ) : ViewModel() {
     private val _polyLinesFlow = MutableStateFlow<List<List<LatLng>>>(emptyList())
     val polyLinesFlow = _polyLinesFlow
 
-    private val _trackingState = MutableStateFlow(TRACKING_STATE_PAUSED)
-    val trackingState: StateFlow<Int> = _trackingState
-    var state = TRACKING_STATE_PAUSED
-
+    val trackingState: StateFlow<Int> = trackingManager.isTracking
+    
     private val _runsFlow = MutableStateFlow<List<Run>>(emptyList())
     val runsFlow: StateFlow<List<Run>> = _runsFlow
 
-    private val _currentLocation = MutableStateFlow<LatLng?>(null)
-    val currentLocation: StateFlow<LatLng?> = _currentLocation.asStateFlow()
+    val currentLocation: StateFlow<LatLng?> = trackingManager.locationFlow.map { it?.latLng }.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
 
-    private val _currentBearing = MutableStateFlow(0f)
-    val currentBearing: StateFlow<Float> = _currentBearing.asStateFlow()
+    val currentBearing: StateFlow<Float> = trackingManager.locationFlow.map { it?.bearing ?: 0f }.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        initialValue = 0f
+    )
 
-    private val _timeInMillis = MutableStateFlow(0L)
-    val timeInMillis: StateFlow<Long> = _timeInMillis.asStateFlow()
+    val timeInMillis: StateFlow<Long> = trackingManager.timeRunInMillis
 
     val distanceInMeters: StateFlow<Float> = polyLinesFlow.map { polylines ->
         calculateDistance(polylines)
@@ -63,7 +67,7 @@ class TrackingViewmodel @Inject constructor(
         if (time == 0L) {
             0f
         } else {
-            (distance / 1000f) / (time / 1000f / 60 / 60) // distance in km / time in hours
+            (distance / 1000f) / (time / 1000f / 3600f) // distance in km / time in hours
         }
     }.stateIn(
         scope = viewModelScope,
@@ -79,18 +83,33 @@ class TrackingViewmodel @Inject constructor(
     val run: StateFlow<Run?> = _run.asStateFlow()
 
     init {
-        // Initialize state based on TrackingService's current state
+        // Collect tracking state to handle stopping and saving
         viewModelScope.launch {
-            TrackingService.isTracking.collect {
-                Timber.d("isTracking: $it")
-                _trackingState.value = it
-                state = it
-                if (it == TRACKING_STATE_STOPPED) { // State 2 means run stopped due to duration or explicit stop
-                    updateRun() // Save the run data
+            trackingManager.isTracking.collect { state ->
+                if (state == TRACKING_STATE_STOPPED) {
+                    updateRun()
                 }
             }
         }
-        // Collect runs directly from the repository as a Flow
+
+        // Collect location updates to build polylines
+        viewModelScope.launch {
+            trackingManager.locationFlow.collect { locationData ->
+                if (locationData != null && trackingState.value == TRACKING_STATE_RUNNING) {
+                    val currentPolyLines = _polyLinesFlow.value.toMutableList()
+                    if (currentPolyLines.isEmpty() || currentPolyLines.last().isEmpty()) {
+                        currentPolyLines.add(mutableListOf(locationData.latLng))
+                    } else {
+                        val currentPolyLine = currentPolyLines.last().toMutableList()
+                        currentPolyLine.add(locationData.latLng)
+                        currentPolyLines[currentPolyLines.lastIndex] = currentPolyLine
+                    }
+                    _polyLinesFlow.value = currentPolyLines
+                }
+            }
+        }
+
+        // Collect runs directly from the repository
         viewModelScope.launch {
             trackingRepository.getAllRunsSortedByDate().collect { runs ->
                 _runsFlow.value = runs
@@ -98,34 +117,9 @@ class TrackingViewmodel @Inject constructor(
         }
     }
 
-    fun getLocationFlow() {
-        viewModelScope.launch {
-            TrackingService.locationFlow.collect {
-                if (it != null) {
-                    Timber.d("LocationFlow: $it")
-                    if (state == TRACKING_STATE_RUNNING) {
-                        val currentPolyLines = _polyLinesFlow.value.toMutableList()
-                        if (currentPolyLines.isEmpty() || currentPolyLines.last().isEmpty()) {
-                            currentPolyLines.add(mutableListOf(it.latLng))
-                        } else {
-                            val currentPolyLine = currentPolyLines.last().toMutableList()
-                            currentPolyLine.add(it.latLng)
-                            currentPolyLines[currentPolyLines.lastIndex] = currentPolyLine
-                        }
-                        _polyLinesFlow.value = currentPolyLines
-                    }
-                    _currentLocation.value = it.latLng
-                    _currentBearing.value = it.bearing
-                }
-            }
-        }
-        viewModelScope.launch {
-            TrackingService.timeRunInMillis.collect {
-                Timber.d("TimeRunInMillis: $it")
-                _timeInMillis.value = it
-            }
-        }
-    }
+    // This is now redundant but kept for interface compatibility if needed, 
+    // though the logic is moved to init { }
+    fun getLocationFlow() { }
 
     fun getRunById(id: Int) =
         trackingRepository.getRunById(id)
@@ -148,7 +142,6 @@ class TrackingViewmodel @Inject constructor(
 
     fun startRun() {
         runStartedAt = System.currentTimeMillis()
-        _timeInMillis.value = 0L
         _polyLinesFlow.value = emptyList()
         val currentPolyLines = _polyLinesFlow.value.toMutableList()
         currentPolyLines.add(mutableListOf())
@@ -160,23 +153,20 @@ class TrackingViewmodel @Inject constructor(
         trackingRepository.insertRun(createRun())
         trackingRepository.stopLocationService()
         _polyLinesFlow.value = emptyList()
-        _trackingState.value = TRACKING_STATE_PAUSED
-        _timeInMillis.value = 0L
-        _navigateToRunsScreen.emit(Unit) // Emit event to navigate
+        _navigateToRunsScreen.emit(Unit)
     }
 
     fun createRun(): Run = Run(
         startedAt = runStartedAt,
-        durationInMillis = _timeInMillis.value,
+        durationInMillis = timeInMillis.value,
         img = null,
         distanceInMeters = distanceInMeters.value.toInt(),
         avgSpeedInKMH = avgSpeedInKMH.value,
-        caloriesBurned = 0, // Placeholder, can be calculated later
+        caloriesBurned = 0,
         locationList = _polyLinesFlow.value
     )
 
     fun deleteRun(run: Run) = viewModelScope.launch {
-        Timber.d("deleteRun: $run")
         trackingRepository.deleteRun(run)
     }
 }
