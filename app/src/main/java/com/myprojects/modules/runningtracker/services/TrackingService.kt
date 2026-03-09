@@ -86,7 +86,7 @@ class TrackingService : LifecycleService() {
         lifecycleScope.launch {
             isTracking.collect { isTracking ->
                 updateLocationTracking(isTracking == TRACKING_STATE_RUNNING)
-                updateNotificationTrackingState(isTracking == TRACKING_STATE_RUNNING)
+        //        updateNotificationTrackingState(isTracking == TRACKING_STATE_RUNNING)
             }
         }
     }

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,21 +38,21 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
-import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
 import kotlinx.coroutines.launch
 
 @Composable
 fun LoginComposable(navController: NavController) {
     val context = LocalContext.current
     val activity = context as Activity
-    val locationPermissionsGranted =
-        remember { mutableStateOf(areLocationPermissionsAlreadyGranted(context)) }
+    val permissionsGranted =
+        remember { mutableStateOf(arePermissionsAlreadyGranted(context)) }
     val shouldShowPermissionRationale = remember {
         mutableStateOf(
             shouldShowRequestPermissionRationale(
                 activity,
                 Manifest.permission.ACCESS_COARSE_LOCATION
-            )
+            ) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS))
         )
     }
 
@@ -59,39 +60,43 @@ fun LoginComposable(navController: NavController) {
         mutableStateOf(false)
     }
 
-    val locationPermissions = arrayOf(
+    val permissionsToRequest = mutableListOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_COARSE_LOCATION
-    )
+    ).apply {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }.toTypedArray()
 
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
+    val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = { permissions ->
-            locationPermissionsGranted.value =
-                permissions.values.reduce { acc, isPermissionGranted ->
-                    acc && isPermissionGranted
-                }
-            if (!locationPermissionsGranted.value) {
+            val allGranted = permissions.entries.all { it.value }
+            permissionsGranted.value = allGranted
+
+            if (!allGranted) {
                 shouldShowPermissionRationale.value =
                     shouldShowRequestPermissionRationale(
                         activity,
                         Manifest.permission.ACCESS_COARSE_LOCATION
-                    )
+                    ) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS))
             } else {
                 navController.navigate(Routes.Runs.route)
             }
             shouldDirectUserToApplicationSettings.value =
-                !shouldShowPermissionRationale.value && !locationPermissionsGranted.value
+                !shouldShowPermissionRationale.value && !permissionsGranted.value
         })
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(key1 = lifecycleOwner, effect = {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START &&
-                !locationPermissionsGranted.value &&
+                !permissionsGranted.value &&
                 !shouldShowPermissionRationale.value
             ) {
-                //         locationPermissionLauncher.launch(locationPermissions)
+                // permissionLauncher.launch(permissionsToRequest)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -130,24 +135,26 @@ fun LoginComposable(navController: NavController) {
             )
             Button(
                 onClick = {
-                    if (!locationPermissionsGranted.value
+                    if (!permissionsGranted.value
                         && !shouldShowPermissionRationale.value
                     ) {
-                        locationPermissionLauncher.launch(locationPermissions)
+                        permissionLauncher.launch(permissionsToRequest)
                     }
                 }
             ) {
                 Text("Log In")
             }
         }
-        if (locationPermissionsGranted.value) {
-            navController.navigate(Routes.Runs.route)
+        if (permissionsGranted.value) {
+            LaunchedEffect(Unit) {
+                navController.navigate(Routes.Runs.route)
+            }
         }
         if (shouldShowPermissionRationale.value) {
             LaunchedEffect(Unit) {
                 scope.launch {
                     val userAction = snackbarHostState.showSnackbar(
-                        message = "Please authorize location permissions",
+                        message = "Please authorize location and notification permissions to track your runs.",
                         actionLabel = "Approve",
                         duration = SnackbarDuration.Indefinite,
                         withDismissAction = true
@@ -155,7 +162,7 @@ fun LoginComposable(navController: NavController) {
                     when (userAction) {
                         SnackbarResult.ActionPerformed -> {
                             shouldShowPermissionRationale.value = false
-                            locationPermissionLauncher.launch(locationPermissions)
+                            permissionLauncher.launch(permissionsToRequest)
                         }
 
                         SnackbarResult.Dismissed -> {
@@ -171,11 +178,22 @@ fun LoginComposable(navController: NavController) {
     }
 }
 
-fun areLocationPermissionsAlreadyGranted(context: Context): Boolean {
-    return ContextCompat.checkSelfPermission(
+fun arePermissionsAlreadyGranted(context: Context): Boolean {
+    val locationGranted = ContextCompat.checkSelfPermission(
         context,
         Manifest.permission.ACCESS_FINE_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
+
+    val notificationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        true
+    }
+
+    return locationGranted && notificationGranted
 }
 
 fun openApplicationSettings(context: Context) {
