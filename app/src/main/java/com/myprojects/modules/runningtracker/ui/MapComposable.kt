@@ -1,54 +1,57 @@
 package com.myprojects.modules.runningtracker.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationSearching
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.LocationSearching
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapEffect
+import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.myprojects.modules.runningtracker.ui.viewmodel.TrackingViewmodel
-import kotlinx.coroutines.launch
 import com.myprojects.modules.runningtracker.util.formatTime
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import com.google.android.gms.maps.CameraUpdateFactory
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
+@OptIn(MapsComposeExperimentalApi::class)
 @Composable
 fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
     val coroutineScope = rememberCoroutineScope()
@@ -62,6 +65,7 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
     val currentBearing by viewmodel.currentBearing.collectAsStateWithLifecycle()
 
     var isAutoFollowEnabled by remember { mutableStateOf(true) }
+    var shouldTakeSnapshot by remember { mutableStateOf(false) }
 
     LaunchedEffect(currentLocation, currentBearing, isAutoFollowEnabled) {
         if (isAutoFollowEnabled) {
@@ -80,29 +84,39 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
     }
 
     LaunchedEffect(Unit) {
-        viewmodel.getLocationFlow()
-        viewmodel.navigateToRunsScreen.collect { // Observe for navigation events
+        viewmodel.navigateToRunsScreen.collect {
             navController.navigate(route = Routes.Runs.route) {
                 popUpTo(Routes.Tracking.route) { inclusive = true }
             }
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose { //viewmodel.updateRun()
-        }
-    }
-
-    fun pauseTracking() {
-        viewmodel.pauseRun()
-    }
-
-    fun resumeTracking() {
-        viewmodel.resumeRun()
-    }
-
     fun stopTracking() {
-        viewmodel.updateRun() // This will now trigger the navigation via SharedFlow
+        if (polyLines.isNotEmpty() && polyLines.any { it.isNotEmpty() }) {
+            val boundsBuilder = LatLngBounds.builder()
+            var hasPoints = false
+            for (polyLine in polyLines) {
+                for (point in polyLine) {
+                    boundsBuilder.include(point)
+                    hasPoints = true
+                }
+            }
+            if (hasPoints) {
+                coroutineScope.launch {
+                    isAutoFollowEnabled = false
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 100),
+                        1000
+                    )
+                    delay(1200) // Wait for animation to finish
+                    shouldTakeSnapshot = true
+                }
+            } else {
+                viewmodel.updateRun()
+            }
+        } else {
+            viewmodel.updateRun()
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -111,20 +125,24 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
             cameraPositionState = cameraPositionState,
             onMapClick = { isAutoFollowEnabled = false }
         ) {
+            MapEffect(shouldTakeSnapshot) { map ->
+                if (shouldTakeSnapshot) {
+                    map.snapshot { bitmap ->
+                        viewmodel.updateRun(bitmap)
+                        shouldTakeSnapshot = false
+                    }
+                }
+            }
+
             currentLocation?.let {
                 Marker(state = MarkerState(position = it))
             }
 
-            if (polyLines.isNotEmpty()) {
-                for (polyLine in polyLines) {
-                    Polyline(
-                        points = polyLine.toList(), color = Color.Red, width = 12f
-                    )
-                }
+            polyLines.forEach { polyLine ->
+                Polyline(points = polyLine, color = Color.Red, width = 12f)
             }
         }
 
-        // Auto-follow toggle button
         SmallFloatingActionButton(
             onClick = { isAutoFollowEnabled = !isAutoFollowEnabled },
             modifier = Modifier
@@ -172,9 +190,10 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
             ) {
                 FloatingActionButton(
                     onClick = {
-                        when (trackingState) {
-                            1 -> pauseTracking()
-                            0 -> resumeTracking()
+                        if (trackingState == 1) {
+                            viewmodel.pauseRun()
+                        } else {
+                            viewmodel.resumeRun()
                         }
                     },
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -190,7 +209,7 @@ fun MapComposable(navController: NavController, viewmodel: TrackingViewmodel) {
                 Spacer(modifier = Modifier.width(24.dp))
 
                 FloatingActionButton(
-                    onClick = { coroutineScope.launch { stopTracking() } },
+                    onClick = { stopTracking() },
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.size(64.dp)
@@ -220,10 +239,4 @@ fun StatItem(label: String, value: String) {
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
-}
-
-@Preview
-@Composable
-fun PreviewMapComposable() {
-    // Mock preview logic
 }

@@ -1,9 +1,9 @@
 package com.myprojects.modules.runningtracker.ui.viewmodel
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
-import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_PAUSED
 import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_RUNNING
 import com.myprojects.modules.runningtracker.Constants.TRACKING_STATE_STOPPED
 import com.myprojects.modules.runningtracker.db.Run
@@ -13,7 +13,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 import com.myprojects.modules.runningtracker.util.calculateDistance
 import kotlinx.coroutines.flow.asStateFlow
@@ -117,10 +116,6 @@ class TrackingViewmodel @Inject constructor(
         }
     }
 
-    // This is now redundant but kept for interface compatibility if needed, 
-    // though the logic is moved to init { }
-    fun getLocationFlow() { }
-
     fun getRunById(id: Int) =
         trackingRepository.getRunById(id)
             .onEach {
@@ -149,22 +144,24 @@ class TrackingViewmodel @Inject constructor(
         trackingRepository.startLocationService()
     }
 
-    fun updateRun() = viewModelScope.launch {
-        trackingRepository.insertRun(createRun())
+    fun updateRun(bitmap: Bitmap? = null) = viewModelScope.launch {
+        trackingRepository.insertRun(createRun(bitmap))
         trackingRepository.stopLocationService()
         _polyLinesFlow.value = emptyList()
         _navigateToRunsScreen.emit(Unit)
     }
 
-    fun createRun(): Run = Run(
-        startedAt = runStartedAt,
-        durationInMillis = timeInMillis.value,
-        img = null,
-        distanceInMeters = distanceInMeters.value.toInt(),
-        avgSpeedInKMH = avgSpeedInKMH.value,
-        caloriesBurned = 0,
-        locationList = _polyLinesFlow.value
-    )
+    private fun createRun(bitmap: Bitmap? = null): Run {
+        return Run(
+            startedAt = runStartedAt,
+            durationInMillis = timeInMillis.value,
+            img = bitmap,
+            distanceInMeters = distanceInMeters.value.toInt(),
+            avgSpeedInKMH = avgSpeedInKMH.value,
+            caloriesBurned = 0, // Calories calculation removed
+            locationList = _polyLinesFlow.value
+        )
+    }
 
     fun deleteRun(run: Run) = viewModelScope.launch {
         trackingRepository.deleteRun(run)
