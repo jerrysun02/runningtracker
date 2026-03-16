@@ -96,7 +96,7 @@ fun RouteComposable(navController: NavController, viewmodel: TrackingViewmodel, 
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Time: ${formatTime(it.durationInMillis)}",
+                            text = "Duration: ${formatTime(it.durationInMillis)}",
                             modifier = Modifier.padding(bottom = 4.dp),
                             color = Color.White
                         )
