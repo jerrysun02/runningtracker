@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
-import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Looper
@@ -28,7 +26,6 @@ import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_ID
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_NAME
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_ID
 import com.myprojects.modules.runningtracker.Constants.TIMER_UPDATE_INTERVAL
-import com.myprojects.modules.runningtracker.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

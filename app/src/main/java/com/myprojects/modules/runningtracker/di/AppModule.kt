@@ -19,7 +19,6 @@ import com.myprojects.modules.runningtracker.Constants.ACTION_SHOW_TRACKING_FRAG
 import com.myprojects.modules.runningtracker.ui.MainActivity
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_ID
 import com.myprojects.modules.runningtracker.R
-import dagger.hilt.android.qualifiers.ApplicationContext
 
 @Module
 @InstallIn(SingletonComponent::class)
