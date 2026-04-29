@@ -7,6 +7,7 @@ import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
@@ -72,6 +73,7 @@ class TrackingService : LifecycleService() {
 
     private var previousLocation: Location? = null
     private var previousUpdateTime: Long = 0L
+    private var isTimerEnabled = false
 
     override fun onCreate() {
         super.onCreate()
@@ -130,11 +132,20 @@ class TrackingService : LifecycleService() {
         val notificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel(notificationManager)
-        startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
-        startTimer()
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            startForeground(
+                NOTIFICATION_ID,
+                baseNotificationBuilder.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
+        }
     }
 
     private fun startTimer() {
+        if (isTimerEnabled) return
+        isTimerEnabled = true
         lifecycleScope.launch {
             while (trackingManager.isTracking.value == TRACKING_STATE_RUNNING) {
                 serviceRunningTime = System.currentTimeMillis() - currentRunStartTime
@@ -162,6 +173,7 @@ class TrackingService : LifecycleService() {
                 }
                 delay(TIMER_UPDATE_INTERVAL)
             }
+            isTimerEnabled = false
             if (trackingManager.isTracking.value == TRACKING_STATE_STOPPED) {
                 killService()
             }

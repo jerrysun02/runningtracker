@@ -19,7 +19,6 @@ import com.myprojects.modules.runningtracker.Constants.ACTION_SHOW_TRACKING_FRAG
 import com.myprojects.modules.runningtracker.ui.MainActivity
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_ID
 import com.myprojects.modules.runningtracker.R
-import com.myprojects.modules.runningtracker.services.TrackingService
 import dagger.hilt.android.qualifiers.ApplicationContext
 
 @Module
@@ -42,10 +41,6 @@ object AppModule {
     @Singleton
     @Provides
     fun providesContext(app: Application): Context = app.applicationContext
-
-    @Singleton
-    @Provides
-    fun provideTrackingService(@ApplicationContext app: Context) = TrackingService()
 
     @Singleton
     @Provides

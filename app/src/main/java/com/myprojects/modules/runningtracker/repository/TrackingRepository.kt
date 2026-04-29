@@ -2,6 +2,7 @@ package com.myprojects.modules.runningtracker.repository
 
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.ContextCompat
 import com.myprojects.modules.runningtracker.Constants.ACTION_PAUSE_SERVICE
 import com.myprojects.modules.runningtracker.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.myprojects.modules.runningtracker.Constants.ACTION_STOP_SERVICE
@@ -43,7 +44,7 @@ class TrackingRepository @Inject constructor(
     fun startLocationService() =
         Intent(context, TrackingService::class.java).also {
             it.action = ACTION_START_OR_RESUME_SERVICE
-            context.startService(it)
+            ContextCompat.startForegroundService(context, it)
         }
 
     fun pauseLocationService() =
