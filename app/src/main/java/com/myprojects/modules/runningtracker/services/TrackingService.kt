@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
+import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Looper
@@ -26,6 +28,7 @@ import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_ID
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_CHANNEL_NAME
 import com.myprojects.modules.runningtracker.Constants.NOTIFICATION_ID
 import com.myprojects.modules.runningtracker.Constants.TIMER_UPDATE_INTERVAL
+import com.myprojects.modules.runningtracker.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -83,6 +86,25 @@ class TrackingService : LifecycleService() {
                 updateLocationTracking(state == TRACKING_STATE_RUNNING)
             }
         }
+    }
+
+    private fun updateNotificationState(isTracking: Boolean) {
+        val notificationActionText = if (isTracking) "Pause" else "Resume"
+        val intent = if (isTracking) {
+            Intent(this, TrackingService::class.java).apply { action = ACTION_PAUSE_SERVICE }
+        } else {
+            Intent(this, TrackingService::class.java).apply { action = ACTION_START_OR_RESUME_SERVICE }
+        }
+        val pendingIntent = PendingIntent.getService(this, 1, intent, FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+
+        curNotificationBuilder.clearActions()
+        curNotificationBuilder.addAction(
+            R.drawable.ic_run,
+            notificationActionText,
+            pendingIntent
+        )
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(NOTIFICATION_ID, curNotificationBuilder.build())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -155,8 +177,6 @@ class TrackingService : LifecycleService() {
                 }
 
                 if (serviceRunningTime >= lastSecondTimestamp + 1000L) {
-                    val notificationManager =
-                        getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     val formattedTime = String.format(
                         Locale.getDefault(),
                         "%02d:%02d:%02d",
@@ -164,7 +184,13 @@ class TrackingService : LifecycleService() {
                         TimeUnit.MILLISECONDS.toMinutes(serviceRunningTime) % 60,
                         TimeUnit.MILLISECONDS.toSeconds(serviceRunningTime) % 60
                     )
-                    curNotificationBuilder.setContentText(formattedTime)
+                    
+                    curNotificationBuilder
+                        .setContentTitle("Running...")
+                        .setContentText(formattedTime)
+                    
+                    val notificationManager =
+                        getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.notify(NOTIFICATION_ID, curNotificationBuilder.build())
                     lastSecondTimestamp += 1000L
                 }
@@ -226,11 +252,13 @@ class TrackingService : LifecycleService() {
 
     private fun pauseService() {
         trackingManager.updateTrackingState(TRACKING_STATE_PAUSED)
+        updateNotificationState(false)
         if (wakeLock.isHeld) wakeLock.release()
     }
 
     private fun startTracking() {
         trackingManager.updateTrackingState(TRACKING_STATE_RUNNING)
+        updateNotificationState(true)
         currentRunStartTime = System.currentTimeMillis() - serviceRunningTime
         startTimer()
         if (!wakeLock.isHeld) wakeLock.acquire(1000 * 60 * 60 * 8L)
